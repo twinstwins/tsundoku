@@ -17,6 +17,21 @@ require "sprockets/railtie"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
+module Projects
+  class Application < Rails::Application
+    config.load_defaults 5.1
+# Rails が最初から書いているコメントは省略 ...
+    config.generators do |g|
+      g.test_framework :rspec,
+        fixtures: false,
+        view_specs: false,
+        helper_specs: false,
+        routing_specs: false
+    end
+  end
+end
+
+
 module Tsundoku
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
