@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Home</title>
+  </head>
+  <body>
+    <% if user_signed_in? %> <%# この行を追加する %>
+  <%= link_to "サインアウト", destroy_user_session_path, method: :delete %>
+  <% end %>
+
+
+    <p>かりのとっぷ</p>
+    <%= link_to "仮のボタンです", "#", class: "btn btn-primary" %>
+  </body>
+</html>
