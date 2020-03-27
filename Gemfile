@@ -55,6 +55,9 @@ group :development do
   gem 'rspec-rails'
   gem 'spring-commands-rspec'
   gem "factory_bot_rails"
+
+  gem 'rubocop', require: false
+  gem 'rubocop-rails'
 end
 
 
