@@ -1,0 +1,57 @@
+<div id="script-check">
+  <h1>じゃゔぁすくりぷとちぇっく</h1>
+</div>
+
+<h1><%= @user.name %>のページ</h1>
+<h6><%= @mycontents %>積んでいます</h6>
+
+ <% if user_signed_in? %>
+ <div id ="following_form">
+   <%= render 'follow_form'%>
+ </div>
+
+<div id ="follow_counter">
+  <%= render 'stats'%>
+</div>
+
+  <%= link_to "パスワードを変更する", edit_user_registration_path, class: "btn btn-outline-dark common-btn edit-profile-btn" %>
+
+  <%= link_to "サインアウト", destroy_user_session_path, method: :delete, class: "list-group-item list-group-item-action" %>
+
+  <%= link_to "プロフィールを編集", edit_user_path(@user), class: "list-group-item list-group-item-action" %>
+
+  <%= link_to "キャンセル", "#", class: "list-group-item list-group-item-action", "data-dismiss": "modal" %>
+<% end %>
+
+<%= @user.email %></h1>
+
+<div>
+    <% if @user.avatar? %>
+    <%= image_tag @user.avatar.avatar_image.url %>
+    <% else %>
+    <p>No Image</p>
+    <% end %>
+</div>
+
+ <% if @user == current_user %>
+   <div class="row">
+     <p>
+       <%= @user.email %>
+     </p>
+   </div>
+  <% end %>
+
+  <div class="card">
+    <div class="card-body">
+     <% @user.contents.each do |content| %>
+      <p><%= content.name %>さんの投稿</p>
+      <p><%= content.description %></p>
+      <%= link_to time_ago_in_words(content.created_at).upcase + "前", "#" %>
+        <% content.photos.each do |photo| %>
+          <%= link_to (content_path(photo.content.id)) do %>
+            <%= image_tag photo.image.thumb.url %>
+          <% end %>
+        <% end %>
+     <% end %>
+   </div>
+   </div>

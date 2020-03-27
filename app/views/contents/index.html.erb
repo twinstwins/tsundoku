@@ -1,0 +1,82 @@
+<div id="script-check">
+  <h1>じゃゔぁすくりぷとちぇっく</h1>
+  <%if current_user  %>
+    <%= "#{current_user.name}さんがログインしています"%>
+  <%end%>
+</div>
+
+
+<div class="card">
+  <div class="card-body">
+  <% @users.each do |user| %>
+   <% user.contents.each do |content| %>
+    <p><%= content.name %>さんの投稿</p>
+    <p><%= link_to content.user.name , user_path(user) %> </p>
+    <p><%= content.description %></p>
+    <%= link_to time_ago_in_words(content.created_at).upcase + "前", "#" %>
+
+      <% content.photos.each do |photo| %>
+        <%= link_to (content_path(photo.content.id)) do %>
+          <%= image_tag photo.image.thumb.url %>
+        <% end %>
+      <% end %>
+    <div id="like-icon-post-<%= content.id.to_s %>">
+      <% if content.liked_by(current_user).present? %>
+        <%= link_to "いいねを取り消す", content_like_path(content.id, content.liked_by(current_user)), method: :DELETE, remote: true, class: "loved hide-text" %>
+      <% else %>
+          <%= link_to "いいね", content_likes_path(content), method: :POST, remote: true, class: "love hide-text" %>
+      <% end %>
+    </div>
+    <div id="like-text-post-<%= content.id.to_s %>">
+        <%= render "like_text", { likes: content.likes } %>
+   </div>
+
+    <div id="comment-post-<%= content.id.to_s %>">
+       <%= render 'comment_list', { content: content } %>
+    </div>
+        <%= link_to time_ago_in_words(content.created_at).upcase + "前", content_path(content),
+        class: "light-color post-time no-text-decoration" %>
+        <hr>
+     <div class="row actions" id="comment-form-post-<%= content.id.to_s %>">
+       <%= form_with model: [content, Comment.new], class: "w-100" do |f| %>
+       <%= f.hidden_field :user_id, value: current_user.id %>
+       <%= f.hidden_field :content_id, value: content.id %>
+       <%= f.text_field :comment, class: "form-control comment-input border-0", placeholder: "コメント ...", autocomplete: :off %>
+       <%= f.submit "コメント送信", class: "btn btn-large btn-primary follow-btn" %>
+     <% end %>
+     </div>
+     <h2>以下にリツイート的な機能を実装</h2>
+     <%= form_with model: [current_user, Content.new], url: contents_path, method: :post  do |f| %>
+
+         <%= f.hidden_field :name, value: "#{content.name}"%>
+         <%= f.text_field :description,value: "#{content.description}" %>
+         <% if content.photos.present? %>
+          <%= f.text_field :image, value: "#{content.photos.first.image.url}" %>
+         <% end %>
+         <%= f.fields_for :photos do |i| %>
+         <%= i.file_field :image %>
+       <% end %>
+       <%= f.submit "積む!!!!!!!!", class: "btn btn-primary" %>
+       <% end %>
+       </div>
+
+
+     <h2>以上にリツイート的な機能を実装</h2>
+     </div>
+
+   <% end %>
+   <% end %>
+
+  </div>
+</div>
+
+<h1>以下にフォローしているユーザーの投稿を表示</h1>
+<% @contents_ids.each do |content_id| %>
+<% content = Content.find(content_id) %>
+   <% if content.photos.present?%>
+     <% photo = content.photos.first%>
+     <%= image_tag photo.image.thumb.url %>
+   <% end %>
+ <p><%= "#{content.user.name} さん" %></p>
+  <%= link_to time_ago_in_words(Content.find(content_id).created_at).upcase + "前", "#" %>
+<% end %>

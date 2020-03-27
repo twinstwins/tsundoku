@@ -1,0 +1,4 @@
+$('#like-icon-post-<%= @content.id.to_s %>').
+  html('<%= link_to "いいね", content_likes_path(@content), method: :POST, remote: true, class: "love hide-text" %>');
+$('#like-text-post-<%= @content.id.to_s %>').
+  html('<%= j render "contents/like_text", { likes: @content.likes } %>');

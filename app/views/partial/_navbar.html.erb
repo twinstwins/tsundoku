@@ -8,12 +8,22 @@
 
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav ml-md-auto align-items-center">
-        <li>
-          <%= link_to "投稿", "#", class: "btn btn-primary" %>
-        </li>
-        <li>
-          <%= link_to "", "#", class: "nav-link commonNavIcon profile-icon" %>
-        </li>
+
+        <li class ="nav-item"><%= link_to "ユーザー一覧",users_path, class: "btn btn-primary" %></li>
+        <li class ="nav-item"><% if user_signed_in? == false %>
+          <%= link_to "ログイン", new_user_session_path, class: "list-group-item list-group-item-action" %>
+        <% end %></li>
+
+
+
+        <% if user_signed_in? %>
+          <li>
+            <%= link_to "投稿", new_content_path, class: "btn btn-primary" %>
+            <%= link_to "投稿一覧", contents_path, class: "list-group-item list-group-item-action" %>
+            <%= link_to "プロフィールを編集", edit_user_registration_path, class: "list-group-item list-group-item-action" %>
+            <%= link_to "ログアウト", destroy_user_session_path, method: :delete, class: "list-group-item list-group-item-action"%>
+         </li>
+        <% end %>
       </ul>
     </div>
   </div>

@@ -10,10 +10,8 @@
   </head>
 
   <body>
-
-    <%= render "partial/navbar" %>
+    <%= render 'partial/navbar' %>
     <%= render "partial/flash_alert" %>
-
     <% if flash[:notice] %>
       <div class="alert alert-info">
         <%= flash[:notice] %>
@@ -24,7 +22,7 @@
         <%= flash[:alert] %>
       </div>
     <% end %>
-
     <%= yield %>
+    <%= render 'partial/footer' %>
   </body>
 </html>

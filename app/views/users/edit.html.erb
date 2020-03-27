@@ -1,0 +1,19 @@
+<%= form_for(@user) do |f| %>
+   <% if @user.avatar? %>
+      <%= image_tag @user.avatar.url %>
+   <% else %>
+      <%= image_tag "/assets/default.jpg", :size => '100x100' %>
+   <% end %>
+    <div class="field">
+        <%= f.label :avatar %>
+      <button type="button" class="btn btn-outline-secondary rounded-pill">
+         <%= f.file_field :avatar, accept: 'image/jpeg,image/gif,image/png' %>
+      </button>
+    </div>
+
+    <div class="field">
+        <%= f.label :name %><br />
+        <%= f.text_field :name, autofocus: true, placeholder: "tsundoku@gmail.com" %>
+    </div>
+　　<%= f.submit '更新する', class: 'btn btn-primary' %>
+<% end %>

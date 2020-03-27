@@ -1,0 +1,14 @@
+<h1>全てのユーザー</h1>
+
+<ul>
+  <% @users.each do |user| %>
+    <li>
+      <% if user.avatar? %>
+        <%= image_tag user.avatar.avatar_image.url , class: 'avatar_image' %>
+      <% else %>
+        <p>イメージ未登録</p>
+      <% end %>
+      <%= link_to user.name, user_path(user.id) %>
+    </li>
+  <% end %>
+</ul>

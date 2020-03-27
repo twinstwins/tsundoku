@@ -1,0 +1,4 @@
+$('#like-icon-post-<%= @content.id.to_s %>').
+  html('<%= link_to "いいねを取り消す", content_like_path(@content.id, @like), method: :DELETE, remote: true, class: "loved hide-text" %>');
+$('#like-text-post-<%= @content.id.to_s %>').
+  html('<%= j render "contents/like_text", { likes: @content.likes } %>');

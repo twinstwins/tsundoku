@@ -1,0 +1,13 @@
+<% content.comments.each do |comment| %>
+  <div class="mb-2">
+    <% if comment.user == current_user %>
+      <%= link_to "コメント削除", content_comment_path(content.id, comment), method: :delete, remote: true, class: "delete-comment" %>
+    <% end %>
+    <span>
+      <strong>
+        <%= link_to comment.user.name, user_path(comment.user), class: "no-text-decoration black-color" %>
+      </strong>
+    </span>
+    <span><%= comment.comment %></span>
+  </div>
+<% end %>

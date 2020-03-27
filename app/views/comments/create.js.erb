@@ -1,0 +1,6 @@
+$('#comment-post-<%= @content.id.to_s %>').
+  html('<%= j render "contents/comment_list", { content: @content } %>');
+$('#comment-form-post-<%= @content.id.to_s %> #comment_comment').val("");
+
+$("#script-check").
+html("反映が確認できました");

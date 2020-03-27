@@ -1,0 +1,13 @@
+<p><%= @content.user.name %></p>
+<p><%= @content.name %></p>
+<p><%= @content.description %></p>
+<%= link_to user_path(@content.user)  %>
+<h2>アバターイメージ</h2>
+<%= image_tag (@content.user.avatar.avatar_image.url) %>
+<%= link_to user_path(@content.user) %>
+<strong><%= @content.user.name %></strong>
+
+<h2>コンテンツイメージ</h2>
+<% @content.photos.each do |photo| %>
+    <%= image_tag photo.image.thumb.url %>
+<% end %>

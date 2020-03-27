@@ -1,0 +1,11 @@
+$("#follow_counter").
+html('<%= j render "users/stats",{ user: @user } %>');
+
+$("#script-check").
+html("反映が確認できました");
+
+$("#following_form").
+html('<%= j render "users/follow_form",{ user: @user } %>')
+
+$("#script-check").
+html("反映が確認できました");

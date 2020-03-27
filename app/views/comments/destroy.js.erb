@@ -1,0 +1,2 @@
+$('#comment-post-<%= @content.id.to_s %>').
+  html('<%= j render "contents/comment_list", { content: @content } %>');

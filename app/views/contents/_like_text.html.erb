@@ -1,0 +1,17 @@
+<strong>
+  <% likes.each.with_index do |like, index| %>
+    <% if likes.size == 1 %>
+      <%= like.user.name %> </strong> が「いいね！」しました
+    <% elsif like == likes.last %>
+      </strong>and<strong>
+      <%= + like.user.name %></strong> が「いいね！」しました
+    <% elsif index > 1 %>
+      </strong><%= "and " + (likes.size-index).to_s + " 他 " %> が「いいね！」しました
+      <% break %>
+    <% elsif index == likes.size-2 || index == 1 %>
+      <%= like.user.name %>
+    <% else %>
+      <%= like.user.name + ", " %>
+    <% end %>
+  <% end %>
+</strong>

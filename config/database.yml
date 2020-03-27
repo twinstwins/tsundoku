@@ -13,13 +13,16 @@ default: &default
   adapter: mysql2
   encoding: utf8
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  username: user
+  username: root
   password: password
-  socket: /tmp/mysql.sock
+  # Docker環境で作動する場合コメント解除
+  # host: db
+
 
 development:
   <<: *default
   database: Tsundoku_development
+  host: localhost
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
