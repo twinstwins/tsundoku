@@ -16,13 +16,13 @@ default: &default
   username: root
   password: password
   # Docker環境で作動する場合コメント解除
-  # host: db
+  host: db
 
 
 development:
   <<: *default
   database: Tsundoku_development
-  host: localhost
+  # host: localhost
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
