@@ -62,6 +62,13 @@ RSpec.describe FrontendAssets do
     expect(assets({}).comments_enabled?).to be(false)
   end
 
+  it 'keeps follows independent without enabling any React page' do
+    instance = assets('REACT_FOLLOWS_ENABLED' => '1')
+    expect(instance.follows_enabled?).to be(true)
+    expect(instance.enabled?).to be(false)
+    expect(assets({}).follows_enabled?).to be(false)
+  end
+
   it 'reads transitive imports and orders shared CSS before entry CSS once' do
     data = entry('imports' => ['shared', 'nested'])
     data['shared'] = { 'file' => 'assets/shared.js', 'css' => ['assets/shared.css'], 'imports' => ['nested'] }

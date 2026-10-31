@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsundoku API",
     "version": "1.0.0",
-    "description": "同一オリジンのセッション認証。全応答はCache-Control: no-store。リストはID降順。メールとCSRFトークンは本人用の/meだけに含む。いいね・コメント更新は本人のセッションとCSRFトークンを検証する。"
+    "description": "同一オリジンのセッション認証。全応答はCache-Control: no-store。リストはID降順。メールとCSRFトークンは本人用の/meだけに含む。いいね・コメント・フォロー更新は本人のセッションとCSRFトークンを検証する。"
   },
   "servers": [
     {
@@ -590,6 +590,150 @@
           }
         }
       }
+    },
+    "/api/v1/users/{user_id}/follow": {
+      "put": {
+        "operationId": "followUser",
+        "summary": "本人からのフォローを登録済みにする",
+        "description": "同じ要求を繰り返しても状態を反転しない。実行者はセッション、相手はURLから決め、本文のfollower_id・following_id・relationship IDは使わない。自分自身への要求は422。X-CSRF-TokenにGET /api/v1/meのトークンを付ける。",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "相手の現在の件数と本人からのフォロー状態",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowStateResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "unfollowUser",
+        "summary": "本人からのフォローを解除済みにする",
+        "description": "同じ要求を繰り返しても状態を反転しない。実行者はセッション、相手はURLから決め、本文のfollower_id・following_id・relationship IDは使わない。自分自身への要求は422。X-CSRF-TokenにGET /api/v1/meのトークンを付ける。",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "相手の現在の件数と本人からのフォロー状態",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowStateResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      },
+      "get": {
+        "operationId": "getFollowState",
+        "summary": "本人から相手へのフォロー状態",
+        "description": "ログイン必須。公開ユーザーAPIに閲覧者別の状態を追加しない。自分のプロフィールではis_current_userがtrueとなる。",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "相手の件数と本人の状態",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowStateResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1143,6 +1287,50 @@
                 "minimum": 0
               }
             }
+          }
+        }
+      },
+      "FollowState": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "user_id",
+          "following_count",
+          "followers_count",
+          "followed_by_current_user",
+          "is_current_user"
+        ],
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "following_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "followers_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "followed_by_current_user": {
+            "type": "boolean"
+          },
+          "is_current_user": {
+            "type": "boolean"
+          }
+        }
+      },
+      "FollowStateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FollowState"
           }
         }
       }

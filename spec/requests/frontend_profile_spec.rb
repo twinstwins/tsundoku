@@ -35,6 +35,29 @@ RSpec.describe 'Frontend profile', type: :request do
     expect(response.body).not_to include('data-react-page')
   end
 
+  it 'moves only follow controls into React when enabled and keeps owner details in Rails' do
+    sign_in user
+    assets = FrontendAssets.new(env: { 'REACT_PROFILE_ENABLED' => '1', 'REACT_FOLLOWS_ENABLED' => '1', 'VITE_DEV_SERVER_URL' => 'http://frontend:5173' }, development: true)
+    allow(FrontendAssets).to receive(:new).and_return(assets)
+    get user_path(user)
+    doc = Nokogiri::HTML(response.body)
+    root = doc.at_css('[data-react-page="profile"]')
+    expect(root['data-follows-enabled']).to eq('true')
+    expect(root['data-login-url']).to eq(new_user_session_path(return_to: user_path(user)))
+    expect(doc.css('#follow_counter, #following_form')).to be_empty
+    expect(response.body).to include(user.email, edit_user_path(user))
+  end
+
+  it 'keeps legacy follow controls when only the follow flag is enabled' do
+    sign_in other
+    assets = FrontendAssets.new(env: { 'REACT_FOLLOWS_ENABLED' => '1', 'VITE_DEV_SERVER_URL' => 'http://frontend:5173' }, development: true)
+    allow(FrontendAssets).to receive(:new).and_return(assets)
+    get user_path(user)
+    doc = Nokogiri::HTML(response.body)
+    expect(doc.at_css('#following_form form')['data-remote']).to eq('true')
+    expect(response.body).not_to include('data-react-page')
+  end
+
   it 'never exposes another user email or edit controls, in either rendering mode' do
     [false, true].each do |enabled|
       frontend(enabled)
@@ -67,6 +90,20 @@ RSpec.describe 'Frontend profile', type: :request do
     get '/users/0', as: :json
     expect(response).to have_http_status(:not_found)
     expect(JSON.parse(response.body).dig('error', 'code')).to eq('not_found')
+  end
+
+  it 'reloads relationship lists from the server when returning after a follow change in either mode' do
+    sign_in other
+    [false, true].each do |enabled|
+      frontend(enabled)
+      [following_user_path(user), followers_user_path(user)].each do |path|
+        get path
+        expect(response).to have_http_status(:ok)
+        expect(response.headers['Cache-Control']).to include('no-store')
+        doc = Nokogiri::HTML(response.body)
+        expect(doc.at_css('meta[name="turbolinks-cache-control"]')['content']).to eq('no-cache')
+      end
+    end
   end
 
   it 'falls back to the safe legacy profile when the requested build is missing' do

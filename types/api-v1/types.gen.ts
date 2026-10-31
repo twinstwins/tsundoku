@@ -168,6 +168,18 @@ export type DeleteCommentResponse = {
     };
 };
 
+export type FollowState = {
+    user_id: number;
+    following_count: number;
+    followers_count: number;
+    followed_by_current_user: boolean;
+    is_current_user: boolean;
+};
+
+export type FollowStateResponse = {
+    data: FollowState;
+};
+
 export type Page = number;
 
 export type PerPage = number;
@@ -617,3 +629,110 @@ export type DeleteCommentResponses = {
 };
 
 export type DeleteCommentResponse2 = DeleteCommentResponses[keyof DeleteCommentResponses];
+
+export type UnfollowUserData = {
+    body?: never;
+    headers: {
+        'X-CSRF-Token': string;
+    };
+    path: {
+        user_id: number;
+    };
+    query?: never;
+    url: '/api/v1/users/{user_id}/follow';
+};
+
+export type UnfollowUserErrors = {
+    /**
+     * 401 未認証。HTMLへのリダイレクトはしない。
+     */
+    401: Error;
+    /**
+     * 404 対象なし。
+     */
+    404: Error;
+    /**
+     * 422 入力不正。fieldsに項目別メッセージを返す。
+     */
+    422: Error;
+};
+
+export type UnfollowUserError = UnfollowUserErrors[keyof UnfollowUserErrors];
+
+export type UnfollowUserResponses = {
+    /**
+     * 相手の現在の件数と本人からのフォロー状態
+     */
+    200: FollowStateResponse;
+};
+
+export type UnfollowUserResponse = UnfollowUserResponses[keyof UnfollowUserResponses];
+
+export type GetFollowStateData = {
+    body?: never;
+    path: {
+        user_id: number;
+    };
+    query?: never;
+    url: '/api/v1/users/{user_id}/follow';
+};
+
+export type GetFollowStateErrors = {
+    /**
+     * 401 未認証。HTMLへのリダイレクトはしない。
+     */
+    401: Error;
+    /**
+     * 404 対象なし。
+     */
+    404: Error;
+};
+
+export type GetFollowStateError = GetFollowStateErrors[keyof GetFollowStateErrors];
+
+export type GetFollowStateResponses = {
+    /**
+     * 相手の件数と本人の状態
+     */
+    200: FollowStateResponse;
+};
+
+export type GetFollowStateResponse = GetFollowStateResponses[keyof GetFollowStateResponses];
+
+export type FollowUserData = {
+    body?: never;
+    headers: {
+        'X-CSRF-Token': string;
+    };
+    path: {
+        user_id: number;
+    };
+    query?: never;
+    url: '/api/v1/users/{user_id}/follow';
+};
+
+export type FollowUserErrors = {
+    /**
+     * 401 未認証。HTMLへのリダイレクトはしない。
+     */
+    401: Error;
+    /**
+     * 404 対象なし。
+     */
+    404: Error;
+    /**
+     * 422 入力不正。fieldsに項目別メッセージを返す。
+     */
+    422: Error;
+};
+
+export type FollowUserError = FollowUserErrors[keyof FollowUserErrors];
+
+export type FollowUserResponses = {
+    /**
+     * 相手の現在の件数と本人からのフォロー状態
+     */
+    200: FollowStateResponse;
+};
+
+export type FollowUserResponse = FollowUserResponses[keyof FollowUserResponses];

@@ -1,8 +1,8 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { test, expect, register, createContent, expectImageLoaded } from '../e2e/helpers';
+import { test, expect, register, createContent, expectImageLoaded, anotherUser, visit } from '../e2e/helpers';
 
-test('Rails loads Vite modules and React Refresh preserves image fallback state', async ({ page }) => {
+test('Rails loads Vite modules and React Refresh preserves image fallback state', async ({ page, browser }) => {
   const user = await register(page, true);
   const me = await (await page.request.get('/api/v1/me')).json();
   const avatarUrl: string = me.data.avatar_url;
@@ -43,4 +43,10 @@ test('Rails loads Vite modules and React Refresh preserves image fallback state'
   await expect(page.locator('[data-react-page="profile"]')).toHaveCount(1);
   await expect(page.locator('[data-react-page="profile-posts"]')).toHaveCount(1);
   await expect(page.getByRole('link', { name: `${post.title}さんの投稿`, exact: true })).toBeVisible();
+  await expect(page.getByText('自分のプロフィールです。')).toBeVisible();
+  const { user: target } = await anotherUser(browser);
+  await visit(page, target.path);
+  await page.getByRole('button', { name: 'Follow', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Unfollow', exact: true })).toBeEnabled();
+  await expect(page.locator(`a[href="${target.path}/followers"]`)).toHaveText('1 followers');
 });

@@ -18,7 +18,7 @@ export function startFrontendPages() {
       switch (element.dataset.reactPage) {
         case 'users': page = <UsersPage page={usersPage(window.location.search)} pathname={window.location.pathname} />; break;
         case 'content': page = <ContentPage id={id!} loginUrl={element.dataset.loginUrl!} likesEnabled={element.dataset.likesEnabled === 'true'} commentsEnabled={element.dataset.commentsEnabled === 'true'} />; break;
-        case 'profile': page = <ProfileHeader id={id!} />; break;
+        case 'profile': page = <ProfileHeader id={id!} followsEnabled={element.dataset.followsEnabled === 'true'} loginUrl={element.dataset.loginUrl!} />; break;
         case 'profile-posts': page = <ProfilePosts id={id!} page={usersPage(window.location.search)} pathname={window.location.pathname} />; break;
         default: continue;
       }

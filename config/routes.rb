@@ -3,6 +3,7 @@ Rails.application.routes.draw do
     namespace :v1 do
       resource :me, only: :show, controller: 'me'
       resources :users, only: [:index, :show] do
+        resource :follow, only: [:show, :update, :destroy]
         member do
           get :following, :followers, :contents
         end

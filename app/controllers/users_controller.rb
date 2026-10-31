@@ -1,6 +1,7 @@
 class UsersController < ApplicationController
   before_action :authenticate_user!, only: [:edit, :update]
   before_action :set_editable_user, only: [:edit, :update]
+  before_action :prevent_profile_caching, only: [:show, :following, :followers]
 
   def index
     @user = current_user
@@ -12,7 +13,6 @@ class UsersController < ApplicationController
   end
 
   def show
-    response.headers['Cache-Control'] = 'no-store'
     @user = User.find(params[:id])
     if frontend_assets.enabled?(:profile)
       render :show_react
@@ -53,6 +53,10 @@ class UsersController < ApplicationController
   end
 
  private
+  def prevent_profile_caching
+    response.headers['Cache-Control'] = 'no-store'
+  end
+
   def user_params
     request_attributes(:user, :name, :avatar)
   end

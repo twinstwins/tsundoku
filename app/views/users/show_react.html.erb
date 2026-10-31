@@ -1,10 +1,10 @@
 <% content_for :head do %><meta name="turbolinks-cache-control" content="no-cache"><% end %>
 <main class="container py-4">
-  <div data-react-page="profile" data-user-id="<%= @user.id %>">
+  <div data-react-page="profile" data-user-id="<%= @user.id %>" data-follows-enabled="<%= frontend_assets.follows_enabled? %>" data-login-url="<%= new_user_session_path(return_to: user_path(@user)) %>">
     <p role="status">プロフィールを読み込み中…</p>
   </div>
   <section aria-label="プロフィールの操作" class="mb-4">
-    <%= render 'profile_actions' %>
+    <%= render 'profile_actions', react_follows: frontend_assets.follows_enabled? %>
   </section>
   <div data-react-page="profile-posts" data-user-id="<%= @user.id %>">
     <p role="status">投稿を読み込み中…</p>
