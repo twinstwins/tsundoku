@@ -4,7 +4,7 @@ class UsersController < ApplicationController
 
   def index
     @user = current_user
-    if frontend_assets.enabled?
+    if frontend_assets.enabled?(:users)
       render :index_react
     else
       @users = User.all

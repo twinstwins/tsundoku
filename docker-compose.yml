@@ -16,6 +16,7 @@ services:
   web: # さっき書いたDockerfileをwebって名前で扱うよ、って感じです
     environment:
       REACT_USERS_ENABLED: ${REACT_USERS_ENABLED:-0}
+      REACT_CONTENT_DETAIL_ENABLED: ${REACT_CONTENT_DETAIL_ENABLED:-0}
     platform: linux/amd64
     build:
       context: .

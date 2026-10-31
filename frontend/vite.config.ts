@@ -16,7 +16,7 @@ export default defineConfig(({ command }) => {
     },
     build: {
       outDir: '../public/frontend', emptyOutDir: true, manifest: true,
-      rollupOptions: { input: 'src/entrypoints/users.tsx' },
+      rollupOptions: { input: 'src/entrypoints/application.tsx' },
     },
   };
 });
