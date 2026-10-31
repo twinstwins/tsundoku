@@ -1,0 +1,69 @@
+name: Bun evaluation
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/bun-evaluation.yml'
+      - 'compose.bun-evaluation.yml'
+      - 'tools/bun-evaluation/**'
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: 'Number of cold/warm samples and full E2E runs (1–5)'
+        default: '5'
+        type: choice
+        options: ['1', '5']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bun-evaluation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      EVALUATION_RUNS: ${{ github.event.inputs.runs || '5' }}
+      EVALUATION_E2E_RUNS: ${{ github.event.inputs.runs || '5' }}
+      EVALUATION_LABEL: github-linux
+      EVALUATION_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Build isolated evaluation environment
+        run: docker compose -f compose.e2e.yml -f compose.bun-evaluation.yml build web e2e
+      - name: Compare npm and Bun, including the React sample and full E2E
+        run: >-
+          docker compose -f compose.e2e.yml -f compose.bun-evaluation.yml run --rm
+          -e EVALUATION_LABEL -e EVALUATION_REVISION e2e
+      - name: Collect Rails logs
+        if: always()
+        run: |
+          mkdir -p tmp/bun-evaluation/results/github-linux
+          docker compose -f compose.e2e.yml -f compose.bun-evaluation.yml logs --no-color > tmp/bun-evaluation/results/github-linux/rails.log 2>&1
+      - name: Summarize compatibility results
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          result = Path('tmp/bun-evaluation/results/github-linux/results.json')
+          if result.exists():
+              data = json.loads(result.read_text())
+              with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
+                  out.write('| 構成 | 全チェックの互換性 |\n| --- | --- |\n')
+                  for mode, details in data['modes'].items():
+                      out.write(f'| {mode} | {details["compatible"]} |\n')
+                  out.write('\nBun実行の失敗は候補の評価結果として保存します。このジョブの成功は、Bunの全面採用を意味しません。詳細は成果物のresults.jsonとコマンド別ログを参照してください。\n')
+          PY
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: bun-evaluation
+          path: tmp/bun-evaluation/results/github-linux/
+          retention-days: 7
+      - name: Remove isolated test environment
+        if: always()
+        run: docker compose -f compose.e2e.yml -f compose.bun-evaluation.yml down -v --remove-orphans
