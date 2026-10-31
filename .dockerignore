@@ -12,3 +12,6 @@ playwright/.auth
 e2e-docker.log
 public/bun-evaluation
 tools/bun-evaluation/sample/dist
+
+public/frontend
+frontend/.vitest

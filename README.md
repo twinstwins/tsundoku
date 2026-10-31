@@ -64,3 +64,5 @@ GitHub Actionsの`E2E`ワークフローは、専用DBでのRSpec・API型の生
 React・TypeScript・Viteへの移行順序と完了条件は[フロントエンド移行計画](docs/frontend-modernization.md)を参照してください。
 
 Bunの比較検証では、今回はNode.jsとnpmを継続する判断にしました。[測定結果と採用判断](docs/bun-evaluation.md)、[検証の再実行手順](tools/bun-evaluation/README.md)を参照してください。
+
+ユーザー一覧のReact版を追加しました。初期状態は既存画面です。[新画面の起動・切替・開発時更新・テスト](docs/react-frontend.md)を参照してください。DockerビルドにはNode.js 24の独立したフロント工程が含まれ、Railsの実行環境は従来の構成を使います。

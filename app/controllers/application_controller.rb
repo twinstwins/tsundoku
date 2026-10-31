@@ -1,5 +1,6 @@
 class ApplicationController < ActionController::Base
   protect_from_forgery with: :exception
+  helper_method :frontend_assets
   before_action :configure_permitted_parameters, if: :devise_controller?
 
   rescue_from ActiveRecord::RecordNotFound do
@@ -16,6 +17,10 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  def frontend_assets
+    @frontend_assets ||= FrontendAssets.new
+  end
 
   def request_attributes(key, *permitted)
     attributes = params.require(key)

@@ -18,11 +18,15 @@ services:
     build: .
     platform: linux/amd64
     environment:
-      RAILS_ENV: development
+      RAILS_ENV: ${E2E_RAILS_ENV:-development}
+      REACT_USERS_ENABLED: ${REACT_USERS_ENABLED:-0}
+      SECRET_KEY_BASE: isolated-e2e-secret-not-used-outside-tests-0123456789abcdef0123456789abcdef
+      RAILS_SERVE_STATIC_FILES: "1"
       DATABASE_URL: mysql2://root:password@db/Tsundoku_e2e
       DISABLE_SPRING: "1"
     command: >-
       sh -c 'bundle exec rails db:create db:migrate &&
+      if [ "$$RAILS_ENV" = "production" ]; then bundle exec rails assets:precompile; fi &&
       rm -f tmp/pids/server.pid &&
       bundle exec rails server -b 0.0.0.0 -p 3000'
     ports:
@@ -45,11 +49,17 @@ services:
     environment:
       PLAYWRIGHT_BASE_URL: http://web:3000
       CI: ${CI:-}
+      EXPECT_REACT_USERS: ${REACT_USERS_ENABLED:-0}
+      E2E_ALL_BROWSERS: ${E2E_ALL_BROWSERS:-0}
     volumes:
       - .:/tests
       - e2e_node_modules:/tests/node_modules
       - api_types_node_modules:/tests/tools/api-types/node_modules
-    command: sh -c 'npm ci && npm --prefix tools/api-types ci && npm run api:types:check && npm run typecheck && npm run test:e2e'
+      - frontend_node_modules:/tests/frontend/node_modules
+    command: >-
+      sh -c 'npm ci && npm --prefix tools/api-types ci && npm --prefix frontend ci &&
+      npm run api:types:check && npm run typecheck && npm --prefix frontend run typecheck &&
+      npm --prefix frontend test && npm run test:e2e && npm run test:e2e:react'
     depends_on:
       web:
         condition: service_healthy
@@ -57,3 +67,4 @@ services:
 volumes:
   e2e_node_modules:
   api_types_node_modules:
+  frontend_node_modules:
