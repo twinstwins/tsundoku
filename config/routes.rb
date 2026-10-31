@@ -1,4 +1,15 @@
 Rails.application.routes.draw do
+  namespace :api, defaults: { format: :json } do
+    namespace :v1 do
+      resource :me, only: :show, controller: 'me'
+      resources :users, only: [:index, :show] do
+        member do
+          get :following, :followers
+        end
+      end
+      resources :contents, only: [:index, :show]
+    end
+  end
   devise_for :users, :controllers => {
     :registrations => 'users/registrations',
     :sessions => 'users/sessions'
@@ -14,7 +25,7 @@ Rails.application.routes.draw do
 
 #userリソースに対する、/:id/following, /:id/followers　のルーティングを定義
 #memberは、users/:id/xxxx となり、 collectは、 users/xxx となる
-  resources :users do
+  resources :users, only: [:index, :show, :edit, :update] do
     member do
      get :following, :followers
     end

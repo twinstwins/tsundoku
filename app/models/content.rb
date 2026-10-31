@@ -5,6 +5,7 @@ class Content < ApplicationRecord
   has_many :liked_users, through: :likes, source: :user
   has_many :comments, dependent: :destroy
   accepts_nested_attributes_for :photos
+  validates :name, presence: true, length: { maximum: 255 }
 
 
   def liked_by(user)

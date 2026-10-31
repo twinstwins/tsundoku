@@ -1,5 +1,6 @@
 class ContentsController < ApplicationController
    include ContentsHelper
+  before_action :authenticate_user!, only: [:index, :new, :create]
 
   def index
     @contents = Content.limit(10).includes(:photos, :user).order('created_at DESC')
@@ -9,7 +10,7 @@ class ContentsController < ApplicationController
   end
 
   def show
-    @content = Content.find_by(id: params[:id])
+    @content = Content.find(params[:id])
     @user = @content.user_id
   end
 
@@ -19,19 +20,23 @@ class ContentsController < ApplicationController
   end
 
   def create
-    @content = Content.new(content_params)
+    @content = current_user.contents.build(content_params)
     if @content.save
-      redirect_to root_path
-      flash[:notice] = "投稿が保存されました"
+      redirect_to root_path, notice: '投稿が保存されました'
     else
-      redirect_to root_path
-      flash[:alert] = "投稿に失敗しました"
+      respond_to do |format|
+        format.html do
+          @content.photos.build if @content.photos.empty?
+          render :new, status: :unprocessable_entity
+        end
+        format.json { render_validation_errors(@content) }
+      end
     end
   end
 
     private
       def content_params
-        params.require(:content).permit(:name,:description, photos_attributes: [:image]).merge(user_id: current_user.id)
+        request_attributes(:content, :name, :description, photos_attributes: [:image])
       end
 
       def following_user_contents_ids(owner)

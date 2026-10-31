@@ -1,4 +1,6 @@
 class UsersController < ApplicationController
+  before_action :authenticate_user!, only: [:edit, :update]
+  before_action :set_editable_user, only: [:edit, :update]
 
   def index
     @users = User.all
@@ -6,22 +8,23 @@ class UsersController < ApplicationController
   end
 
   def show
-      @user = User.find_by(id: params[:id])
+      @user = User.find(params[:id])
       @contents = @user.contents
       @mycontents_count = @user.contents.ids.count
   end
 
   def edit
-    @user = User.find(params[:id])
   end
 
   def update
-    @user = User.find(params[:id])
     if @user.update(user_params)
       flash[:success] = "#{@user} のプロフィールを編集が完了しました"
       redirect_to user_path(@user)
     else
-      render :edit
+      respond_to do |format|
+        format.html { render :edit, status: :unprocessable_entity }
+        format.json { render_validation_errors(@user) }
+      end
     end
   end
 
@@ -39,10 +42,10 @@ class UsersController < ApplicationController
 
  private
   def user_params
-    params.require(:user).permit(:name, :email, :password, :password_confirmation,:avatar)
+    request_attributes(:user, :name, :avatar)
   end
 
-  def set_user
-   @user = User.find(params[:id])
+  def set_editable_user
+    @user = User.where(id: current_user.id).find(params[:id])
   end
 end

@@ -18,6 +18,7 @@
 !/storage/.keep
 
 /node_modules
+/tools/api-types/node_modules/
 /yarn-error.log
 
 /public/assets
