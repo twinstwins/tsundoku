@@ -10,7 +10,8 @@
     "test:e2e:report": "playwright show-report",
     "test:e2e:react": "playwright test --config=playwright.react.config.ts",
     "test:e2e:dev": "playwright test --config=playwright.dev.config.ts",
-    "test:e2e:content": "playwright test --config=playwright.content.config.ts"
+    "test:e2e:content": "playwright test --config=playwright.content.config.ts",
+    "test:e2e:profile": "playwright test --config=playwright.profile.config.ts"
   },
   "engines": {
     "node": ">=22.18.0"

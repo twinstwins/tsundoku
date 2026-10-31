@@ -12,9 +12,17 @@ class UsersController < ApplicationController
   end
 
   def show
-      @user = User.find(params[:id])
-      @contents = @user.contents
-      @mycontents_count = @user.contents.ids.count
+    response.headers['Cache-Control'] = 'no-store'
+    @user = User.find(params[:id])
+    if frontend_assets.enabled?(:profile)
+      render :show_react
+    else
+      @contents = @user.contents.includes(:photos).order(id: :desc)
+      @mycontents_count = @user.contents.count
+    end
+  rescue ActiveRecord::RecordNotFound
+    raise unless request.format.html?
+    render :not_found, status: :not_found
   end
 
   def edit

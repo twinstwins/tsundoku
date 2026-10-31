@@ -22,6 +22,18 @@ module Api
         render_users(User.find(params[:id]).followers)
       end
 
+      def contents
+        user = User.find(params[:id])
+        contents, meta = paginated(user.contents.includes(:photos))
+        render json: { data: contents.map { |content|
+          {
+            id: content.id, name: content.name, description: content.description,
+            created_at: content.created_at.utc.iso8601,
+            photos: content.photos.sort_by(&:id).map { |photo| { id: photo.id, url: photo.image.url, thumbnail_url: photo.image.thumb.url } }
+          }
+        }, meta: meta }
+      end
+
       private
 
       def render_users(relation)

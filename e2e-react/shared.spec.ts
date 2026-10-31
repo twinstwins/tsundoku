@@ -12,7 +12,7 @@ test('the directory works through profile navigation, browser back, and reload',
   await link.click();
   await expect(page.getByRole('heading', { name: `${user.name}のページ`, exact: true })).toBeVisible();
   expect(await page.evaluate(() => (window as any).__directoryVisit)).toBe('same-document');
-  await expect(page.locator('[data-react-page]')).toHaveCount(0);
+  await expect(page.locator('[data-react-page="profile"]')).toHaveCount(process.env.EXPECT_REACT_PROFILE === '1' ? 1 : 0);
   await page.goBack();
   await expect(page.getByRole('link', { name: user.name, exact: true })).toHaveCount(1);
   await expect(root).toHaveCount(react ? 1 : 0);

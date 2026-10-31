@@ -5,6 +5,7 @@ services:
       RAILS_ENV: development
       REACT_USERS_ENABLED: "1"
       REACT_CONTENT_DETAIL_ENABLED: "1"
+      REACT_PROFILE_ENABLED: "1"
       VITE_DEV_SERVER_URL: http://frontend:5173
     depends_on:
       frontend:
@@ -31,6 +32,7 @@ services:
     environment:
       EXPECT_REACT_USERS: "1"
       EXPECT_REACT_CONTENT_DETAIL: "1"
+      EXPECT_REACT_PROFILE: "1"
       FRONTEND_TEST_SOURCE: /frontend-source
     volumes:
       - ./tmp/frontend-dev-test:/frontend-source

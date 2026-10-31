@@ -250,6 +250,43 @@
           }
         ]
       }
+    },
+    "/api/v1/users/{id}/contents": {
+      "get": {
+        "operationId": "listUserContents",
+        "summary": "公開プロフィールの投稿一覧",
+        "description": "指定したユーザーの投稿だけをID降順で返す。メール・CSRFトークン・閲覧者別のいいね状態は含まない。",
+        "security": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          },
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileContentsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -573,6 +610,61 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/Me"
+          }
+        }
+      },
+      "ProfileContent": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "既存の公開プロフィールと同じ投稿項目。本人情報や閲覧者別の状態は含まない。",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "created_at",
+          "photos"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Photo"
+            }
+          }
+        }
+      },
+      "ProfileContentsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileContent"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Pagination"
           }
         }
       }

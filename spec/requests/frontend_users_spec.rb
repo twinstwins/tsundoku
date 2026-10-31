@@ -32,6 +32,7 @@ RSpec.describe 'Frontend user directory', type: :request do
   it 'loads the same entry on legacy detail pages to support Turbolinks visits' do
     assets = instance_double(FrontendAssets, enabled?: true, development?: false, bundle: { script: '/frontend/assets/users.js', stylesheets: [], preloads: [] })
     allow(FrontendAssets).to receive(:new).and_return(assets)
+    allow(assets).to receive(:enabled?).with(:profile).and_return(false)
     get user_path(user)
     expect(response.body).to include('/frontend/assets/users.js')
     expect(response.body).not_to include('data-react-page')

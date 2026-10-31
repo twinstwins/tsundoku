@@ -23,19 +23,40 @@ it('unmounts before Turbolinks caching and mounts once with fresh data on return
   } finally { act(stop); }
 });
 
-it.each(['users', 'content'])('cancels pending %s requests before a cached page is stored', async (page) => {
+it.each(['users', 'content', 'profile', 'profile-posts'])('cancels pending %s requests before a cached page is stored', async (page) => {
   const signals: AbortSignal[] = [];
   vi.stubGlobal('fetch', vi.fn((_url, options) => new Promise((_resolve, reject) => {
     const signal: AbortSignal = options.signal; signals.push(signal);
     signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
   })));
-  document.body.innerHTML = `<div data-react-page="${page}" data-content-id="9" data-login-url="/users/sign_in"></div>`;
+  document.body.innerHTML = `<div data-react-page="${page}" data-content-id="9" data-user-id="9" data-login-url="/users/sign_in"></div>`;
   let stop = () => {};
   act(() => { stop = startFrontendPages(); });
   try {
     await waitFor(() => expect(signals.length).toBeGreaterThan(0));
     act(() => { document.dispatchEvent(new Event('turbolinks:before-cache')); });
     expect(signals.every(signal => signal.aborted)).toBe(true);
+  } finally { act(stop); }
+});
+
+it('mounts both profile regions once while leaving Rails-owned controls untouched', async () => {
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(JSON.stringify(url.includes('/contents?')
+    ? { data: [], meta: { page: 1, per_page: 20, total_count: 0, total_pages: 0 } }
+    : { data: { id: 7, name: '読者', avatar_url: null, contents_count: 0, following_count: 0, followers_count: 0 } }))));
+  document.body.innerHTML = '<div data-react-page="profile" data-user-id="7"></div><section><button>Follow</button></section><div data-react-page="profile-posts" data-user-id="7"></div>';
+  const button = screen.getByRole('button', { name: 'Follow' });
+  let stop = () => {};
+  act(() => { stop = startFrontendPages(); document.dispatchEvent(new Event('turbolinks:load')); });
+  try {
+    expect(await screen.findByRole('heading', { name: '読者のページ' })).toBeVisible();
+    expect(await screen.findByText('投稿はまだありません。')).toBeVisible();
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    act(() => { document.dispatchEvent(new Event('turbolinks:before-cache')); });
+    expect(screen.queryByRole('heading')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Follow' })).toBe(button);
+    act(() => { document.dispatchEvent(new Event('turbolinks:load')); });
+    expect(await screen.findByRole('heading', { name: '読者のページ' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Follow' })).toBe(button);
   } finally { act(stop); }
 });
 

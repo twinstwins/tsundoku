@@ -20,6 +20,8 @@
     "e2e-react/**/*.ts",
     "e2e-dev/**/*.ts",
     "playwright.content.config.ts",
-    "e2e-content/**/*.ts"
+    "e2e-content/**/*.ts",
+    "playwright.profile.config.ts",
+    "e2e-profile/**/*.ts"
   ]
 }
