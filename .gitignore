@@ -25,3 +25,9 @@
 
 # Ignore master key for decrypting credentials and more.
 /config/master.key
+
+# Browser test output and authenticated browser state.
+/playwright-report/
+/test-results/
+/playwright/.auth/
+/e2e-docker.log

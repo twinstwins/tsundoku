@@ -6,7 +6,7 @@
 
   <div class="field">
     <%= f.fields_for :photos do |i| %>
-    <%= i.file_field :image %>
+    <%= i.file_field :image, aria: { label: '投稿画像' } %>
   <% end %>
   </div>
 

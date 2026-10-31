@@ -1,0 +1,57 @@
+name: tsundoku-e2e
+
+services:
+  db:
+    image: mysql:5.6
+    platform: linux/amd64
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+
+  web:
+    build: .
+    platform: linux/amd64
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: mysql2://root:password@db/Tsundoku_e2e
+      DISABLE_SPRING: "1"
+    command: >-
+      sh -c 'bundle exec rails db:create db:migrate &&
+      rm -f tmp/pids/server.pid &&
+      bundle exec rails server -b 0.0.0.0 -p 3000'
+    ports:
+      - "127.0.0.1:${E2E_PORT:-43122}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "ruby", "-rnet/http", "-e", "exit(Net::HTTP.get_response(URI('http://127.0.0.1:3000/')).is_a?(Net::HTTPSuccess) ? 0 : 1)"]
+      interval: 3s
+      timeout: 15s
+      retries: 30
+      start_period: 15s
+
+  e2e:
+    image: mcr.microsoft.com/playwright:v1.64.1-noble
+    init: true
+    ipc: host
+    working_dir: /tests
+    environment:
+      PLAYWRIGHT_BASE_URL: http://web:3000
+      CI: ${CI:-}
+    volumes:
+      - .:/tests
+      - e2e_node_modules:/tests/node_modules
+    command: sh -c 'npm ci && npm run typecheck && npm run test:e2e'
+    depends_on:
+      web:
+        condition: service_healthy
+
+volumes:
+  e2e_node_modules:

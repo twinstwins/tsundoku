@@ -6,3 +6,7 @@ log
 tmp
 node_modules
 coverage
+playwright-report
+test-results
+playwright/.auth
+e2e-docker.log

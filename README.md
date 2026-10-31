@@ -23,3 +23,40 @@ docker compose run --rm web bundle exec rspec
 ```
 
 テストには`Tsundoku_test`データベースを使用します。
+
+## E2Eテストを実行する
+
+Playwrightの固定ブラウザー環境と、開発用とは別のDB・アプリコンテナで実行します。ホストPCにNode.jsやブラウザーを追加しなくても実行できます。
+
+```sh
+docker compose -f compose.e2e.yml up --build --abort-on-container-exit --exit-code-from e2e e2e
+```
+
+PCとモバイルのChromiumで、登録・ログイン・プロフィール・画像投稿・共有・いいね・コメント・フォローの10シナリオを実行します。テストごとにユーザーを生成し、特定のユーザーIDや前のテスト結果には依存しません。`http://localhost:43122`で確認用のアプリにアクセスできます。
+
+HTMLレポートは`playwright-report/`、失敗時のトレース・画像・動画は`test-results/`に出力します。コマンドはテスト結果を終了コードで返します。再実行前や検証後は、専用環境を片付けます。
+
+```sh
+docker compose -f compose.e2e.yml down -v --remove-orphans
+```
+
+DBは一時メモリー上に置くため、DBコンテナの停止でテストデータが消えます。通常の`docker-compose.yml`や既存DBは使用しません。
+
+特定のテストを実行する場合は、アプリだけ起動してからテストを指定できます。
+
+```sh
+docker compose -f compose.e2e.yml up -d --build web
+docker compose -f compose.e2e.yml run --rm e2e sh -c 'npm ci && npm run test:e2e -- --project=chromium e2e/auth.spec.ts'
+```
+
+ホストで対話的に確認する場合はNode.js 24を使用します。
+
+```sh
+npm ci
+npx playwright install chromium
+npm run test:e2e:ui
+```
+
+GitHub Actionsの`E2E`ワークフローは、専用DBでのRSpec・TypeScriptの型チェック・E2EをPRごとに実行し、診断用ファイルを7日間保存します。ブラウザーでの操作は実際のRailsとMySQLに接続し、APIの成功応答を置き換える処理は使いません。
+
+React・TypeScript・Viteへの移行順序と完了条件は[フロントエンド移行計画](docs/frontend-modernization.md)を参照してください。
