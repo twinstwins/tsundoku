@@ -92,6 +92,20 @@ RSpec.describe 'Frontend profile', type: :request do
     expect(JSON.parse(response.body).dig('error', 'code')).to eq('not_found')
   end
 
+  it 'reloads relationship lists from the server when returning after a follow change in either mode' do
+    sign_in other
+    [false, true].each do |enabled|
+      frontend(enabled)
+      [following_user_path(user), followers_user_path(user)].each do |path|
+        get path
+        expect(response).to have_http_status(:ok)
+        expect(response.headers['Cache-Control']).to include('no-store')
+        doc = Nokogiri::HTML(response.body)
+        expect(doc.at_css('meta[name="turbolinks-cache-control"]')['content']).to eq('no-cache')
+      end
+    end
+  end
+
   it 'falls back to the safe legacy profile when the requested build is missing' do
     assets = FrontendAssets.new(root: Rails.root.join('tmp/no-profile-build'), env: { 'REACT_PROFILE_ENABLED' => '1' }, development: false)
     allow(FrontendAssets).to receive(:new).and_return(assets)
