@@ -10,10 +10,13 @@ class ContentsController < ApplicationController
   end
 
   def show
+    response.headers['Cache-Control'] = 'no-store'
     @content = Content.find(params[:id])
     @user = @content.user_id
-    response.headers['Cache-Control'] = 'no-store'
     render :show_react if user_signed_in? && frontend_assets.enabled?(:content)
+  rescue ActiveRecord::RecordNotFound
+    raise unless request.format.html?
+    render :not_found, status: :not_found
   end
 
   def new

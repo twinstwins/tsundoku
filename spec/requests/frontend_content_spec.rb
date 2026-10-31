@@ -53,7 +53,11 @@ RSpec.describe 'Frontend content detail', type: :request do
     frontend('REACT_CONTENT_DETAIL_ENABLED' => '1', 'VITE_DEV_SERVER_URL' => 'http://frontend:5173')
     get '/contents/0'
     expect(response).to have_http_status(:not_found)
+    expect(response.body).to include('投稿が見つかりません')
     expect(response.body).not_to include('data-react-page')
+    get '/contents/0', as: :json
+    expect(response).to have_http_status(:not_found)
+    expect(JSON.parse(response.body).dig('error', 'code')).to eq('not_found')
   end
 
   it 'falls back to the existing detail when the requested build is missing' do

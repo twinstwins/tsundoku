@@ -46,5 +46,6 @@ test('uploaded images render for members and the public guest view remains avail
 test('a missing post keeps its HTTP 404 status', async ({ page }) => {
   const response = await page.goto('/contents/0');
   expect(response?.status()).toBe(404);
+  await expect(page.getByRole('heading', { name: '投稿が見つかりません' })).toBeVisible();
   await expect(page.locator('[data-react-page]')).toHaveCount(0);
 });
