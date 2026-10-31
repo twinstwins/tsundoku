@@ -69,7 +69,7 @@ REACT_USERS_ENABLED=0 E2E_RAILS_ENV=production CI=true docker compose -f compose
 docker compose -f compose.e2e.yml down -v --remove-orphans
 ```
 
-PC・モバイルChromiumで、新画面は30件、既存画面は26件。既存の24件に加え、プロフィールからの戻る操作・再読込・通信失敗からの復帰・ページ送りを確認する。HTMLのviewport指定も検査し、実際の端末幅で横にはみ出さないことを確認する。
+PC・モバイルChromiumで、新画面は30件、既存画面は26件。既存の24件に加え、プロフィールからの戻る操作・再読込・通信失敗からの復帰・ページ送りを確認する。ページ送りの準備用ユーザー20人は、個別のCookieと実際のCSRFトークンを使って登録先へ送信し、最後の1人は画面で登録する。HTMLのviewport指定も検査し、実際の端末幅で横にはみ出さないことを確認する。
 
 開発時のHMRとReact Refreshは、元のソースを変更しないコピーと別の専用環境で確認する。
 
