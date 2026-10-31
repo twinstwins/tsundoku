@@ -1,6 +1,10 @@
-<div id="follow_counter"><%= render 'users/stats' %></div>
+<% unless local_assigns[:react_follows] %>
+  <div id="follow_counter"><%= render 'users/stats' %></div>
+<% end %>
 <% if user_signed_in? %>
-  <div id="following_form"><%= render 'users/follow_form' %></div>
+  <% unless local_assigns[:react_follows] %>
+    <div id="following_form"><%= render 'users/follow_form' %></div>
+  <% end %>
   <% if current_user?(@user) %>
     <p><%= @user.email %></p>
     <p><%= link_to 'プロフィールを編集', edit_user_path(@user) %></p>

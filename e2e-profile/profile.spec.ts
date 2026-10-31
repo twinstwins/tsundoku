@@ -61,13 +61,17 @@ test('profile pagination contains only the selected author and survives reload',
   await expect(page).toHaveURL(new RegExp(`${user.path}$`));
 });
 
-test('Rails follow controls update their counters without replacing the React profile', async ({ page, browser }) => {
+test('follow controls update their counters without replacing the React profile', async ({ page, browser }) => {
   const { user: followed } = await anotherUser(browser);
   const user = await register(page);
   await visit(page, followed.path);
   const root = page.locator('[data-react-page="profile"]');
   await expect(page.getByRole('heading', { name: `${followed.name}のページ`, exact: true })).toBeVisible();
   await root.evaluate(element => element.setAttribute('data-probe', 'kept'));
+  if (process.env.EXPECT_REACT_FOLLOWS === '1') {
+    await expect(root.getByRole('button', { name: 'Follow', exact: true })).toBeEnabled();
+    await expect(page.locator('#following_form')).toHaveCount(0);
+  }
   await page.getByRole('button', { name: 'Follow', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Unfollow', exact: true })).toBeVisible();
   await expect(page.locator(`a[href="${followed.path}/followers"]`)).toHaveText('1 followers');

@@ -30,6 +30,10 @@ class FrontendAssets
     @env['REACT_COMMENTS_ENABLED'] == '1'
   end
 
+  def follows_enabled?
+    @env['REACT_FOLLOWS_ENABLED'] == '1'
+  end
+
   def development_origin
     return @development_origin if defined?(@development_origin)
     @development_origin = nil

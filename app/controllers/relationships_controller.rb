@@ -7,7 +7,8 @@ class RelationshipsController < ApplicationController
     attributes = request_attributes(:relationship, :following_id)
     @user = User.find(attributes.require(:following_id))
     @relationship = current_user.following_relationships.build(following: @user)
-    if @relationship.save
+    saved = @user.with_lock { @relationship.save }
+    if saved
       respond_to :js
     else
       render_validation_errors(@relationship)
@@ -17,7 +18,10 @@ class RelationshipsController < ApplicationController
   def destroy
     @relationship = current_user.following_relationships.find(params[:id])
     @user = @relationship.following
-    @relationship.destroy!
+    @user.with_lock do
+      @relationship = current_user.following_relationships.find(params[:id])
+      @relationship.destroy!
+    end
     redirect_to @user, notice: 'フォローを解除しました'
   end
 end

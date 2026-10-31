@@ -1,6 +1,6 @@
 # Reactフロントの起動・切替・検証
 
-ユーザー一覧（`/`と`/users`）、ログイン済みの投稿詳細（`/contents/:id`）、公開プロフィール（`/users/:id`）をReactへ移行した。React 19.3.1、TypeScript 7.0.2、Vite 8.3.5、TanStack Query 5.105.0を使用する。画面の依存は`frontend/`で固定し、Railsの認証・URLを引き継ぎ、いいね・コメントをJSON APIで更新する。
+ユーザー一覧（`/`と`/users`）、ログイン済みの投稿詳細（`/contents/:id`）、公開プロフィール（`/users/:id`）をReactへ移行した。React 19.3.1、TypeScript 7.0.2、Vite 8.3.5、TanStack Query 5.105.0を使用する。画面の依存は`frontend/`で固定し、Railsの認証・URLを引き継ぎ、いいね・コメント・フォローをJSON APIで更新する。
 
 ## ビルド済みの画面へ切り替える
 
@@ -10,11 +10,12 @@
 | --- | --- |
 | `REACT_USERS_ENABLED` | 公開ユーザー一覧 |
 | `REACT_CONTENT_DETAIL_ENABLED` | ログイン済みの投稿詳細。未ログイン時は従来の公開ERBを継続 |
-| `REACT_PROFILE_ENABLED` | 公開プロフィールの名前・アバター・投稿。フォローと本人の編集導線はRails側に残す |
+| `REACT_PROFILE_ENABLED` | 公開プロフィールの名前・アバター・投稿。本人の編集導線はRails側に残す |
 | `REACT_LIKES_ENABLED` | Reactの投稿詳細からいいねを操作。`REACT_CONTENT_DETAIL_ENABLED=1`も必要 |
 | `REACT_COMMENTS_ENABLED` | Reactの投稿詳細でコメントの一覧・作成・本人による削除。`REACT_CONTENT_DETAIL_ENABLED=1`も必要 |
+| `REACT_FOLLOWS_ENABLED` | Reactのプロフィールからフォロー・解除。`REACT_PROFILE_ENABLED=1`も必要 |
 
-通常のアプリ用Dockerイメージは、独立したNode.js 24.22.1の工程で型を検査してViteをビルドし、生成した`public/frontend/`をRailsへコピーする。Ruby側のNode.js 10は既存Sprockets用として残る。
+通常のアプリ用Dockerイメージは、独立したNode.js 24.22.1の工程で型を検査してViteをビルドし、生成した`public/frontend/`をRailsへコピーする。Dockerの転送対象から入れ子の`node_modules`も除外し、ホスト側の依存やテストキャッシュを持ち込まない。Ruby側のNode.js 10は既存Sprockets用として残る。
 
 ソースをバインドマウントしない本番用コンテナでは、ビルド後に必要な画面の設定を`1`として起動する。既存のSprocketsのprecompileと静的ファイル配信の設定も継続し、Webサーバーから`/frontend/`を配信する。Railsが配信する構成では`RAILS_SERVE_STATIC_FILES=1`を設定する。
 
@@ -23,14 +24,14 @@
 ```sh
 npm --prefix frontend ci
 npm --prefix frontend run build
-REACT_USERS_ENABLED=1 REACT_CONTENT_DETAIL_ENABLED=1 REACT_PROFILE_ENABLED=1 REACT_LIKES_ENABLED=1 REACT_COMMENTS_ENABLED=1 docker compose up --build
+REACT_USERS_ENABLED=1 REACT_CONTENT_DETAIL_ENABLED=1 REACT_PROFILE_ENABLED=1 REACT_LIKES_ENABLED=1 REACT_COMMENTS_ENABLED=1 REACT_FOLLOWS_ENABLED=1 docker compose up --build
 ```
 
 ホストにNode.js 24を入れずにビルドする場合は、同じ作業をNodeコンテナで実行できる。
 
 ```sh
 docker run --rm -v "$PWD:/workdir" -w /workdir/frontend node:24.22.1-bookworm-slim sh -c 'npm ci --no-fund && npm run build'
-REACT_USERS_ENABLED=1 REACT_CONTENT_DETAIL_ENABLED=1 REACT_PROFILE_ENABLED=1 REACT_LIKES_ENABLED=1 REACT_COMMENTS_ENABLED=1 docker compose up --build
+REACT_USERS_ENABLED=1 REACT_CONTENT_DETAIL_ENABLED=1 REACT_PROFILE_ENABLED=1 REACT_LIKES_ENABLED=1 REACT_COMMENTS_ENABLED=1 REACT_FOLLOWS_ENABLED=1 docker compose up --build
 ```
 
 切り戻しは対象画面の設定を`0`としてRailsのプロセスを再起動する。例えば`REACT_CONTENT_DETAIL_ENABLED=0`で投稿詳細だけを戻せる。DBの変更は不要。指定したmanifest、entry、共有chunk、CSSのいずれかが壊れている／存在しない場合も、Railsは既存のERB画面を返す。原因はRailsログに記録する。
@@ -49,7 +50,7 @@ docker compose -f docker-compose.yml -f compose.frontend-dev.yml up --build
 
 この開発用の組合せは3画面を既定で有効にする。個別に従来画面へ戻す場合は、例えば`REACT_PROFILE_ENABLED=0`を付けて起動する。
 
-開発用の組合せではいいね・コメントも既定で有効にする。コメントだけ戻す場合は`REACT_COMMENTS_ENABLED=0`を指定する。`REACT_LIKES_ENABLED=0`で、React詳細の閲覧を保ったまま、いいねを既存一覧で操作する状態に戻せる。DBの変更は不要。
+開発用の組合せではいいね・コメント・フォローも既定で有効にする。フォローだけ戻す場合は`REACT_FOLLOWS_ENABLED=0`を指定する。コメントだけ戻す場合は`REACT_COMMENTS_ENABLED=0`を指定する。`REACT_LIKES_ENABLED=0`で、React詳細の閲覧を保ったまま、いいねを既存一覧で操作する状態に戻せる。DBの変更は不要。
 
 `127.0.0.1:3000`で開く場合は`RAILS_ORIGIN=http://127.0.0.1:3000`を指定する。Docker Desktopで変更が検出されない場合は`VITE_USE_POLLING=1`を指定できる。`VITE_DEV_SERVER_URL`の既定値は`http://localhost:5173`。この設定はdevelopment環境だけで使い、production環境では使わない。
 
@@ -59,7 +60,7 @@ RailsがページURLを扱い、Reactは`data-react-page`で指定した領域�
 
 一覧は`GET /api/v1/users`からIDの降順で20人ずつ取得する。生成済みのAPI型を使い、ページ送りは同じRails URLの`page`パラメーターで表す。空一覧、範囲外のページ、画像未登録・画像取得失敗、通信失敗と再試行を扱う。
 
-プロフィールは公開APIの`GET /api/v1/users/:id`と`GET /api/v1/users/:id/contents`を使う。後者はその人の投稿だけをID降順で20件ずつ返し、`/users/:id?page=2`のようにページを表す。公開項目だけを取得し、本人のメール・編集リンクはRailsが本人にだけ返す。名前と投稿を別のReact領域にし、その間のフォロー操作・件数・編集導線はRailsが管理する。既存Rails UJSによる更新先をReactの内側へ置かず、両方のReact領域を移動時に破棄して未完了の要求も中断する。
+プロフィールは公開APIの`GET /api/v1/users/:id`と`GET /api/v1/users/:id/contents`を使う。後者はその人の投稿だけをID降順で20件ずつ返し、`/users/:id?page=2`のようにページを表す。公開項目だけを取得し、本人のメール・編集リンクはRailsが本人にだけ返す。名前と投稿を別のReact領域にする。フォロー有効時は名前の領域内で件数と操作をReactが管理し、本人のメール・編集導線は領域の外に残す。無効時は従来の件数・Rails UJSのフォロー操作を領域の外に返す。既存Rails UJSによる更新先をReactの内側へ置かず、両方のReact領域を移動時に破棄して未完了の要求も中断する。
 
 従来画面でも他人のメールと編集リンクを表示しない。投稿数の表示と画像なし投稿からの詳細リンクも修正した。プロフィールHTMLは`no-store`と`turbolinks-cache-control=no-cache`を使い、戻る際の本人向け情報とフォロー状態をサーバーで確認し直す。[Turbolinksのキャッシュ制御](https://github.com/turbolinks/turbolinks#opting-out-of-caching)
 
@@ -79,7 +80,13 @@ RailsがページURLを扱い、Reactは`data-react-page`で指定した領域�
 
 コメントの401では下書きをコピーできる状態でログインを案内する。下書きはメモリーだけに置き、画面移動・再読込・ログイン時には失われる。ログイン後は本人が再入力して送信する。404はコメント欄で投稿が見つからないことを案内し、操作を止める。画面を離れた際は未完了の要求を中断する。
 
-APIの通信失敗は再試行、404は対象がないこと、401は再ログインの案内を表示する。ログインリンクに`return_to=/contents/:id`を付け、Deviseのセッション内に戻り先を保存する。戻り先は正の整数IDを持つ投稿パスだけを許可し、外部URL・別画面・クエリー付きURLは受け付けない。投稿HTMLとAPIは`no-store`を返す。直接アクセスで対象がない場合は、RailsがHTTP 404と「投稿が見つかりません」のHTML画面を返す。本文が空の404応答でFirefoxが読み込み完了を待ち続けるケースも、この画面で確認する。JSONを要求した場合のエラー形式は維持する。
+APIの通信失敗は再試行、404は対象がないこと、401は再ログインの案内を表示する。ログインリンクに`return_to=/contents/:id`を付け、Deviseのセッション内に戻り先を保存する。戻り先は正の整数IDを持つ投稿・プロフィールのパスだけを許可し、外部URL・編集などの別画面・クエリー付きURLは受け付けない。投稿HTMLとAPIは`no-store`を返す。直接アクセスで対象がない場合は、RailsがHTTP 404と「投稿が見つかりません」のHTML画面を返す。本文が空の404応答でFirefoxが読み込み完了を待ち続けるケースも、この画面で確認する。JSONを要求した場合のエラー形式は維持する。
+
+フォロー有効時は公開プロフィールに加え、`GET /api/v1/users/:id/follow`で本人の状態を取得する。このAPIはログイン必須で、公開ユーザーAPIに閲覧者別の項目を混ぜない。ゲストも公開プロフィール・投稿・件数を閲覧でき、ログインへのリンクを表示する。自分のプロフィールにはフォローボタンを表示しない。
+
+フォローと解除は同じURLへのPUT・DELETEで、状態を反転させる操作にはしない。毎回`GET /api/v1/me`でCSRFを取得する。送信中は連打を止め、件数はサーバーの応答で更新する。通信断後はGETで実状態を確認し、未反映なら同じ意図を手動で再試行できる。確認も失敗したら新しい書き込みを止め、GETだけの確認を案内する。自動再送やオフライン要求の保留、再ログイン後の自動送信は行わない。
+
+401ではログインして同じプロフィールへ戻るリンクを表示する。404では相手が存在しないことを案内する。フォロー状態の取得失敗でも公開プロフィールと投稿は表示を続け、状態だけを再取得できる。フォロー・フォロワー一覧は既存のRails URLへリンクし、移動・再読込では新しい状態を取得する。
 
 有効時は既存画面にも同じentryを読み込み、Turbolinksの画面移動で二重にReactを作らない。キャッシュ保存・画面差替え前にはReactを破棄し、進行中の取得とQueryキャッシュを片付ける。戻る操作では新しいデータを取得する。React内にRails UJSの`data-remote`は置かない。
 
@@ -99,13 +106,13 @@ npm --prefix frontend run build
 専用DB・コンテナで本番用のRails設定、Sprocketsのprecompile、Vite成果物を使って新旧両画面を確認する。
 
 ```sh
-REACT_USERS_ENABLED=1 REACT_CONTENT_DETAIL_ENABLED=1 REACT_PROFILE_ENABLED=1 REACT_LIKES_ENABLED=1 REACT_COMMENTS_ENABLED=1 E2E_RAILS_ENV=production CI=true docker compose -f compose.e2e.yml up --build --abort-on-container-exit --exit-code-from e2e e2e
+REACT_USERS_ENABLED=1 REACT_CONTENT_DETAIL_ENABLED=1 REACT_PROFILE_ENABLED=1 REACT_LIKES_ENABLED=1 REACT_COMMENTS_ENABLED=1 REACT_FOLLOWS_ENABLED=1 E2E_RAILS_ENV=production CI=true docker compose -f compose.e2e.yml up --build --abort-on-container-exit --exit-code-from e2e e2e
 docker compose -f compose.e2e.yml down -v --remove-orphans
-REACT_USERS_ENABLED=0 REACT_CONTENT_DETAIL_ENABLED=0 REACT_PROFILE_ENABLED=0 REACT_LIKES_ENABLED=0 REACT_COMMENTS_ENABLED=0 E2E_RAILS_ENV=production CI=true docker compose -f compose.e2e.yml up --build --abort-on-container-exit --exit-code-from e2e e2e
+REACT_USERS_ENABLED=0 REACT_CONTENT_DETAIL_ENABLED=0 REACT_PROFILE_ENABLED=0 REACT_LIKES_ENABLED=0 REACT_COMMENTS_ENABLED=0 REACT_FOLLOWS_ENABLED=0 E2E_RAILS_ENV=production CI=true docker compose -f compose.e2e.yml up --build --abort-on-container-exit --exit-code-from e2e e2e
 docker compose -f compose.e2e.yml down -v --remove-orphans
 ```
 
-PC・モバイルChromiumで、3画面・いいね・コメントの有効時は86件、すべて無効時は46件。既存操作に加え、一覧・詳細・プロフィールの表示と復帰、いいねの連打・既存処理との同時送信・通信断・CSRF拒否・再接続・再ログインを確認する。コメントの下書き・21件のページ送り・別ページの本人の削除・既存処理との競合も確認する。応答消失の検証でも先に実際の更新要求をRailsへ送り、確定後にブラウザーへの応答を中断する。成功応答を作り物に置き換えない。
+PC・モバイルChromiumで、3画面・いいね・コメント・フォローの有効時は102件、すべて無効時は50件。既存操作に加え、一覧・詳細・プロフィールの表示と復帰、いいねの連打・既存処理との同時送信・通信断・CSRF拒否・再接続・再ログインを確認する。コメントの下書き・21件のページ送り・別ページの本人の削除・既存処理との競合も確認する。応答消失の検証でも先に実際の更新要求をRailsへ送り、確定後にブラウザーへの応答を中断する。フォローの自分自身への要求拒否、他人・逆方向・別対象の関連の保持、公開閲覧、ログイン復帰、新旧処理との整合も確認する。成功応答を作り物に置き換えない。
 
 ユーザー一覧の準備用20人は個別CookieとCSRFトークンで登録する。プロフィールのページ送り用20投稿は本人のCookieとCSRFトークンで既存の投稿先へ送信し、最後の1件は画面で投稿する。専用のテスト用APIは追加しない。HTMLのviewport指定も検査し、実際の端末幅で横にはみ出さないことを確認する。
 
@@ -117,6 +124,6 @@ E2E_PORT=43123 CI=true docker compose -f compose.e2e.yml -f compose.frontend-dev
 docker compose -f compose.e2e.yml -f compose.frontend-dev-test.yml down -v --remove-orphans
 ```
 
-ブラウザーで画像取得を失敗させ、コンポーネントの表示を変更しても、画像エラーの状態と同じHTML文書が保持されることをPCとモバイルで確認する。その後、Vite経由の投稿詳細でいいねとコメントを操作し、プロフィールまで表示できることも確認する。
+ブラウザーで画像取得を失敗させ、コンポーネントの表示を変更しても、画像エラーの状態と同じHTML文書が保持されることをPCとモバイルで確認する。その後、Vite経由の投稿詳細でいいねとコメントを操作し、プロフィールまで表示し、別のユーザーのフォローも操作できることを確認する。
 
-`E2E`ワークフローは3画面・いいね・コメントの新旧設定、開発時更新をPRごとに確認する。設定の独立性と成果物欠落時の切り戻しはRSpecで確認する。`Browser compatibility`は毎週土曜6時（日本時間）と手動実行でFirefox・WebKitを含む4構成、計172件を検証する。定期実行の設定を変更したPRでも起動する。各種ログ・トレース・レポートは7日間保存する。
+`E2E`ワークフローは3画面・いいね・コメント・フォローの新旧設定、開発時更新をPRごとに確認する。設定の独立性と成果物欠落時の切り戻しはRSpecで確認する。`Browser compatibility`は毎週土曜6時（日本時間）と手動実行でFirefox・WebKitを含む4構成、計204件を検証する。定期実行の設定を変更したPRでも起動する。各種ログ・トレース・レポートは7日間保存する。
