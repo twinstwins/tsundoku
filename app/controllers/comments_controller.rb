@@ -7,7 +7,8 @@ class CommentsController < ApplicationController
     @content = Content.find(params[:content_id])
     @comment = @content.comments.build(comment_params)
     @comment.user = current_user
-    if @comment.save
+    saved = @content.with_lock { @comment.save }
+    if saved
       respond_to :js
     else
       render_validation_errors(@comment)
@@ -16,8 +17,11 @@ class CommentsController < ApplicationController
 
   def destroy
     @content = Content.find(params[:content_id])
-    @comment = current_user.comments.where(content_id: @content.id).find(params[:id])
-    if @comment.destroy
+    destroyed = @content.with_lock do
+      @comment = current_user.comments.where(content_id: @content.id).find(params[:id])
+      @comment.destroy
+    end
+    if destroyed
       respond_to :js
     else
       render_validation_errors(@comment)

@@ -128,6 +128,46 @@ export type LikeStateResponse = {
     data: LikeState;
 };
 
+export type Comment = {
+    id: number;
+    content_id: number;
+    comment: string;
+    created_at: string;
+    user: UserSummary;
+    owned_by_current_user: boolean;
+};
+
+export type CommentsResponse = {
+    data: Array<Comment>;
+    meta: Pagination;
+    /**
+     * 現在のページに含まれなくても本人の最初のコメントを返す。未投稿はnull。
+     */
+    current_user_comment: Comment | null;
+};
+
+export type CreateCommentRequest = {
+    comment: {
+        /**
+         * 空白だけは不可。1ユーザー・1投稿につき1件。
+         */
+        comment: string;
+    };
+};
+
+export type CommentResponse = {
+    data: Comment;
+    comments_count: number;
+};
+
+export type DeleteCommentResponse = {
+    data: {
+        id: number;
+        content_id: number;
+        comments_count: number;
+    };
+};
+
 export type Page = number;
 
 export type PerPage = number;
@@ -458,3 +498,122 @@ export type LikeContentResponses = {
 };
 
 export type LikeContentResponse = LikeContentResponses[keyof LikeContentResponses];
+
+export type ListCommentsData = {
+    body?: never;
+    path: {
+        content_id: number;
+    };
+    query?: {
+        page?: number;
+        per_page?: number;
+    };
+    url: '/api/v1/contents/{content_id}/comments';
+};
+
+export type ListCommentsErrors = {
+    /**
+     * 401 未認証。HTMLへのリダイレクトはしない。
+     */
+    401: Error;
+    /**
+     * 404 対象なし。
+     */
+    404: Error;
+    /**
+     * 422 入力不正。fieldsに項目別メッセージを返す。
+     */
+    422: Error;
+};
+
+export type ListCommentsError = ListCommentsErrors[keyof ListCommentsErrors];
+
+export type ListCommentsResponses = {
+    /**
+     * コメントと本人の状態
+     */
+    200: CommentsResponse;
+};
+
+export type ListCommentsResponse = ListCommentsResponses[keyof ListCommentsResponses];
+
+export type CreateCommentData = {
+    body: CreateCommentRequest;
+    headers: {
+        'X-CSRF-Token': string;
+    };
+    path: {
+        content_id: number;
+    };
+    query?: never;
+    url: '/api/v1/contents/{content_id}/comments';
+};
+
+export type CreateCommentErrors = {
+    /**
+     * 本文のリソースが不足・不正
+     */
+    400: Error;
+    /**
+     * 401 未認証。HTMLへのリダイレクトはしない。
+     */
+    401: Error;
+    /**
+     * 404 対象なし。
+     */
+    404: Error;
+    /**
+     * 422 入力不正。fieldsに項目別メッセージを返す。
+     */
+    422: Error;
+};
+
+export type CreateCommentError = CreateCommentErrors[keyof CreateCommentErrors];
+
+export type CreateCommentResponses = {
+    /**
+     * 作成したコメントと件数
+     */
+    201: CommentResponse;
+};
+
+export type CreateCommentResponse = CreateCommentResponses[keyof CreateCommentResponses];
+
+export type DeleteCommentData = {
+    body?: never;
+    headers: {
+        'X-CSRF-Token': string;
+    };
+    path: {
+        content_id: number;
+        id: number;
+    };
+    query?: never;
+    url: '/api/v1/contents/{content_id}/comments/{id}';
+};
+
+export type DeleteCommentErrors = {
+    /**
+     * 401 未認証。HTMLへのリダイレクトはしない。
+     */
+    401: Error;
+    /**
+     * 404 対象なし。
+     */
+    404: Error;
+    /**
+     * 422 入力不正。fieldsに項目別メッセージを返す。
+     */
+    422: Error;
+};
+
+export type DeleteCommentError = DeleteCommentErrors[keyof DeleteCommentErrors];
+
+export type DeleteCommentResponses = {
+    /**
+     * 削除したIDと件数
+     */
+    200: DeleteCommentResponse;
+};
+
+export type DeleteCommentResponse2 = DeleteCommentResponses[keyof DeleteCommentResponses];

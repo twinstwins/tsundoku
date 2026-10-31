@@ -24,6 +24,7 @@ jobs:
       REACT_CONTENT_DETAIL_ENABLED: "1"
       REACT_PROFILE_ENABLED: "1"
       REACT_LIKES_ENABLED: "1"
+      REACT_COMMENTS_ENABLED: "1"
       E2E_RAILS_ENV: production
       E2E_ALL_BROWSERS: "1"
       CI: "true"
