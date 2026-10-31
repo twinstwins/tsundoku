@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { test, expect, register } from '../e2e/helpers';
+import { test, expect, register, createContent, expectImageLoaded } from '../e2e/helpers';
 
 test('Rails loads Vite modules and React Refresh preserves image fallback state', async ({ page }) => {
   const user = await register(page, true);
@@ -26,4 +26,9 @@ test('Rails loads Vite modules and React Refresh preserves image fallback state'
     await writeFile(source, original);
     await expect(row.getByRole('img', { name: 'イメージ未登録' })).toBeVisible({ timeout: 15_000 });
   }
+  const post = await createContent(page, true);
+  await page.locator(`a[href="${post.path}"]`).first().click();
+  await expect(page.getByRole('heading', { name: post.title, exact: true })).toBeVisible();
+  await expect(page.locator('[data-react-page="content"]')).toHaveCount(1);
+  await expectImageLoaded(page.getByRole('img', { name: '投稿画像 1', exact: true }));
 });

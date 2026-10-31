@@ -42,7 +42,7 @@ RSpec.describe 'Frontend user directory', type: :request do
     allow(FrontendAssets).to receive(:new).and_return(assets)
     get root_path
     expect(response.body).to include('__vite_plugin_react_preamble_installed__', 'http://frontend:5173/@vite/client')
-    expect(response.body.index('__vite_plugin_react_preamble_installed__')).to be < response.body.index('src="http://frontend:5173/src/entrypoints/users.tsx"')
+    expect(response.body.index('__vite_plugin_react_preamble_installed__')).to be < response.body.index('src="http://frontend:5173/src/entrypoints/application.tsx"')
   end
 
   it 'falls back to a working legacy view when a requested build is unavailable' do

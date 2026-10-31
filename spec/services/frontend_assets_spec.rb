@@ -30,6 +30,18 @@ RSpec.describe FrontendAssets do
     expect(assets({}).enabled?).to be(false)
   end
 
+  it 'enables the shared entry while keeping the two page flags independent' do
+    manifest(entry)
+    users = assets('REACT_USERS_ENABLED' => '1')
+    content = assets('REACT_CONTENT_DETAIL_ENABLED' => '1')
+    expect(users.enabled?).to be(true)
+    expect(users.enabled?(:users)).to be(true)
+    expect(users.enabled?(:content)).to be(false)
+    expect(content.enabled?).to be(true)
+    expect(content.enabled?(:users)).to be(false)
+    expect(content.enabled?(:content)).to be(true)
+  end
+
   it 'reads transitive imports and orders shared CSS before entry CSS once' do
     data = entry('imports' => ['shared', 'nested'])
     data['shared'] = { 'file' => 'assets/shared.js', 'css' => ['assets/shared.css'], 'imports' => ['nested'] }

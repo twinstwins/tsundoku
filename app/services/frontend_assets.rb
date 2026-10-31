@@ -3,15 +3,17 @@ require 'uri'
 require 'set'
 
 class FrontendAssets
-  ENTRY = 'src/entrypoints/users.tsx'.freeze
+  ENTRY = 'src/entrypoints/application.tsx'.freeze
+  FEATURES = { users: 'REACT_USERS_ENABLED', content: 'REACT_CONTENT_DETAIL_ENABLED' }.freeze
   InvalidManifest = Class.new(StandardError)
 
   def initialize(root: Rails.root, env: ENV, development: Rails.env.development?)
     @root, @env, @development = Pathname.new(root), env, development
   end
 
-  def enabled?
-    return false unless @env['REACT_USERS_ENABLED'] == '1'
+  def enabled?(page = nil)
+    flags = page ? [FEATURES.fetch(page)] : FEATURES.values
+    return false unless flags.any? { |flag| @env[flag] == '1' }
     return !!development_origin if @development && @env['VITE_DEV_SERVER_URL'].present?
     !!bundle
   end

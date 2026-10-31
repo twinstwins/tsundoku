@@ -21,6 +21,7 @@ jobs:
     timeout-minutes: 20
     env:
       REACT_USERS_ENABLED: "1"
+      REACT_CONTENT_DETAIL_ENABLED: "1"
       E2E_RAILS_ENV: production
       E2E_ALL_BROWSERS: "1"
       CI: "true"

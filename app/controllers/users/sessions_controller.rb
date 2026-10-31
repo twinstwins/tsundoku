@@ -1,27 +1,12 @@
 # frozen_string_literal: true
 
 class Users::SessionsController < Devise::SessionsController
-  # before_action :configure_sign_in_params, only: [:create]
+  before_action :store_content_return_path, only: :new
 
-  # GET /resource/sign_in
-  # def new
-  #   super
-  # end
+  private
 
-  # POST /resource/sign_in
-  # def create
-  #   super
-  # end
-
-  # DELETE /resource/sign_out
-  # def destroy
-  #   super
-  # end
-
-  # protected
-
-  # If you have extra params to permit, append them to the sanitizer.
-  # def configure_sign_in_params
-  #   devise_parameter_sanitizer.permit(:sign_in, keys: [:attribute])
-  # end
+  def store_content_return_path
+    path = params[:return_to]
+    store_location_for(:user, path) if path.is_a?(String) && path.match?(%r{\A/contents/[1-9]\d{0,18}\z})
+  end
 end

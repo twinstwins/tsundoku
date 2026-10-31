@@ -20,6 +20,7 @@ services:
     environment:
       RAILS_ENV: ${E2E_RAILS_ENV:-development}
       REACT_USERS_ENABLED: ${REACT_USERS_ENABLED:-0}
+      REACT_CONTENT_DETAIL_ENABLED: ${REACT_CONTENT_DETAIL_ENABLED:-0}
       SECRET_KEY_BASE: isolated-e2e-secret-not-used-outside-tests-0123456789abcdef0123456789abcdef
       RAILS_SERVE_STATIC_FILES: "1"
       DATABASE_URL: mysql2://root:password@db/Tsundoku_e2e
@@ -50,6 +51,7 @@ services:
       PLAYWRIGHT_BASE_URL: http://web:3000
       CI: ${CI:-}
       EXPECT_REACT_USERS: ${REACT_USERS_ENABLED:-0}
+      EXPECT_REACT_CONTENT_DETAIL: ${REACT_CONTENT_DETAIL_ENABLED:-0}
       E2E_ALL_BROWSERS: ${E2E_ALL_BROWSERS:-0}
     volumes:
       - .:/tests
@@ -59,7 +61,7 @@ services:
     command: >-
       sh -c 'npm ci && npm --prefix tools/api-types ci && npm --prefix frontend ci &&
       npm run api:types:check && npm run typecheck && npm --prefix frontend run typecheck &&
-      npm --prefix frontend test && npm run test:e2e && npm run test:e2e:react'
+      npm --prefix frontend test && npm run test:e2e && npm run test:e2e:react && npm run test:e2e:content'
     depends_on:
       web:
         condition: service_healthy

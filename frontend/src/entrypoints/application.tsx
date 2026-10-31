@@ -1,5 +1,5 @@
 import 'vite/modulepreload-polyfill';
-import { startUserDirectory } from '../bootstrap';
+import { startFrontendPages } from '../bootstrap';
 
-const stop = startUserDirectory();
+const stop = startFrontendPages();
 if (import.meta.hot) import.meta.hot.dispose(stop);

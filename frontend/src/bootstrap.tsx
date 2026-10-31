@@ -2,18 +2,23 @@ import { StrictMode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import UsersPage from './pages/UsersPage';
+import ContentPage from './pages/ContentPage';
 import { usersPage } from './api/users';
 
-export function startUserDirectory() {
+export function startFrontendPages() {
   const mounted = new Map<HTMLElement, { root: Root; client: QueryClient }>();
   function mount() {
-    const element = document.querySelector<HTMLElement>('[data-react-page="users"]');
+    const element = document.querySelector<HTMLElement>('[data-react-page="users"], [data-react-page="content"]');
     if (!element || mounted.has(element)) return;
+    const contentId = element.dataset.contentId;
+    if (element.dataset.reactPage === 'content' && (!contentId || !/^[1-9]\d*$/.test(contentId))) return;
     const client = new QueryClient({ defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } } });
     const root = createRoot(element);
     mounted.set(element, { root, client });
     root.render(<StrictMode><QueryClientProvider client={client}>
-      <UsersPage page={usersPage(window.location.search)} pathname={window.location.pathname} />
+      {element.dataset.reactPage === 'users'
+        ? <UsersPage page={usersPage(window.location.search)} pathname={window.location.pathname} />
+        : <ContentPage id={contentId!} loginUrl={element.dataset.loginUrl!} />}
     </QueryClientProvider></StrictMode>);
   }
   function unmount() {
