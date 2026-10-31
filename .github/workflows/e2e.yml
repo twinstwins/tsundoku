@@ -23,6 +23,7 @@ jobs:
       REACT_USERS_ENABLED: ${{ matrix.react-users }}
       REACT_CONTENT_DETAIL_ENABLED: ${{ matrix.react-users }}
       REACT_PROFILE_ENABLED: ${{ matrix.react-users }}
+      REACT_LIKES_ENABLED: ${{ matrix.react-users }}
       E2E_RAILS_ENV: production
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -33,7 +34,7 @@ jobs:
       - name: Rails regression tests
         run: >-
           docker compose -f compose.e2e.yml run --rm
-          -e RAILS_ENV=test -e REACT_USERS_ENABLED=0 -e REACT_CONTENT_DETAIL_ENABLED=0 -e REACT_PROFILE_ENABLED=0
+          -e RAILS_ENV=test -e REACT_USERS_ENABLED=0 -e REACT_CONTENT_DETAIL_ENABLED=0 -e REACT_PROFILE_ENABLED=0 -e REACT_LIKES_ENABLED=0
           -e DATABASE_URL=mysql2://root:password@db/Tsundoku_e2e_rspec
           web sh -c 'bundle exec rails db:create db:schema:load && bundle exec rspec'
       - name: Browser tests on desktop and mobile

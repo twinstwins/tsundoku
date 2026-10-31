@@ -4,8 +4,11 @@ class LikesController < ApplicationController
   def create
     #この@likeには、current_userの user_id と、content_idが保存される
     @content = Content.find(params[:content_id])
-    @like = current_user.likes.build(content: @content)
-    if @like.save
+    saved = @content.with_lock do
+      @like = current_user.likes.build(content: @content)
+      @like.save
+    end
+    if saved
       respond_to :js
     else
       render_validation_errors(@like)
@@ -14,8 +17,11 @@ class LikesController < ApplicationController
 
   def destroy
     @content = Content.find(params[:content_id])
-    @like = current_user.likes.where(content_id: @content.id).find(params[:id])
-    if @like.destroy
+    destroyed = @content.with_lock do
+      @like = current_user.likes.where(content_id: @content.id).find(params[:id])
+      @like.destroy
+    end
+    if destroyed
       respond_to :js
     else
       render_validation_errors(@like)

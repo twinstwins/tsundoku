@@ -2,11 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { ContentRequestError, fetchContent } from '../api/contents';
 import UserAvatar from '../components/UserAvatar';
 import ContentPhoto from '../components/ContentPhoto';
+import LikeControls from '../components/LikeControls';
 import styles from './ContentPage.module.css';
 
 const dateFormat = new Intl.DateTimeFormat('ja-JP', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Asia/Tokyo' });
 
-export default function ContentPage({ id, loginUrl }: { id: string; loginUrl: string }) {
+export default function ContentPage({ id, loginUrl, likesEnabled = false }: { id: string; loginUrl: string; likesEnabled?: boolean }) {
   const content = useQuery({ queryKey: ['content', id], queryFn: ({ signal }) => fetchContent(id, signal) });
   if (content.isPending) return <main className={styles.page}><p role="status">投稿を読み込み中…</p></main>;
   if (content.isError) {
@@ -39,7 +40,8 @@ export default function ContentPage({ id, loginUrl }: { id: string; loginUrl: st
         <div><dt>コメント</dt><dd>{post.comments_count}</dd></div>
       </dl>
       {post.liked_by_current_user && <p>この投稿にいいねしています</p>}
-      <p className={styles.meta}>いいね・コメントは<a href={`/contents#like-icon-post-${post.id}`}>投稿一覧で操作できます</a>。</p>
+      {likesEnabled && <LikeControls id={id} liked={post.liked_by_current_user} />}
+      <p className={styles.meta}>{likesEnabled ? 'コメントは' : 'いいね・コメントは'}<a href={`/contents#like-icon-post-${post.id}`}>投稿一覧で操作できます</a>。</p>
     </article>
   </main>;
 }

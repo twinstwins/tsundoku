@@ -11,6 +11,7 @@
 | `REACT_USERS_ENABLED` | 公開ユーザー一覧 |
 | `REACT_CONTENT_DETAIL_ENABLED` | ログイン済みの投稿詳細。未ログイン時は従来の公開ERBを継続 |
 | `REACT_PROFILE_ENABLED` | 公開プロフィールの名前・アバター・投稿。フォローと本人の編集導線はRails側に残す |
+| `REACT_LIKES_ENABLED` | Reactの投稿詳細からいいねを操作。`REACT_CONTENT_DETAIL_ENABLED=1`も必要 |
 
 通常のアプリ用Dockerイメージは、独立したNode.js 24.22.1の工程で型を検査してViteをビルドし、生成した`public/frontend/`をRailsへコピーする。Ruby側のNode.js 10は既存Sprockets用として残る。
 
@@ -21,14 +22,14 @@
 ```sh
 npm --prefix frontend ci
 npm --prefix frontend run build
-REACT_USERS_ENABLED=1 REACT_CONTENT_DETAIL_ENABLED=1 REACT_PROFILE_ENABLED=1 docker compose up --build
+REACT_USERS_ENABLED=1 REACT_CONTENT_DETAIL_ENABLED=1 REACT_PROFILE_ENABLED=1 REACT_LIKES_ENABLED=1 docker compose up --build
 ```
 
 ホストにNode.js 24を入れずにビルドする場合は、同じ作業をNodeコンテナで実行できる。
 
 ```sh
 docker run --rm -v "$PWD:/workdir" -w /workdir/frontend node:24.22.1-bookworm-slim sh -c 'npm ci --no-fund && npm run build'
-REACT_USERS_ENABLED=1 REACT_CONTENT_DETAIL_ENABLED=1 REACT_PROFILE_ENABLED=1 docker compose up --build
+REACT_USERS_ENABLED=1 REACT_CONTENT_DETAIL_ENABLED=1 REACT_PROFILE_ENABLED=1 REACT_LIKES_ENABLED=1 docker compose up --build
 ```
 
 切り戻しは対象画面の設定を`0`としてRailsのプロセスを再起動する。例えば`REACT_CONTENT_DETAIL_ENABLED=0`で投稿詳細だけを戻せる。DBの変更は不要。指定したmanifest、entry、共有chunk、CSSのいずれかが壊れている／存在しない場合も、Railsは既存のERB画面を返す。原因はRailsログに記録する。
@@ -47,6 +48,8 @@ docker compose -f docker-compose.yml -f compose.frontend-dev.yml up --build
 
 この開発用の組合せは3画面を既定で有効にする。個別に従来画面へ戻す場合は、例えば`REACT_PROFILE_ENABLED=0`を付けて起動する。
 
+開発用の組合せではいいね操作も既定で有効にする。`REACT_LIKES_ENABLED=0`で、React詳細の閲覧を保ったまま、いいねを既存一覧で操作する状態に戻せる。DBの変更は不要。
+
 `127.0.0.1:3000`で開く場合は`RAILS_ORIGIN=http://127.0.0.1:3000`を指定する。Docker Desktopで変更が検出されない場合は`VITE_USE_POLLING=1`を指定できる。`VITE_DEV_SERVER_URL`の既定値は`http://localhost:5173`。この設定はdevelopment環境だけで使い、production環境では使わない。
 
 ## RailsとReactの境界
@@ -59,7 +62,11 @@ RailsがページURLを扱い、Reactは`data-react-page`で指定した領域�
 
 従来画面でも他人のメールと編集リンクを表示しない。投稿数の表示と画像なし投稿からの詳細リンクも修正した。プロフィールHTMLは`no-store`と`turbolinks-cache-control=no-cache`を使い、戻る際の本人向け情報とフォロー状態をサーバーで確認し直す。[Turbolinksのキャッシュ制御](https://github.com/turbolinks/turbolinks#opting-out-of-caching)
 
-投稿詳細はログイン済みのときだけ`GET /api/v1/contents/:id`を使い、APIの認証条件を維持する。未ログインでのHTML閲覧は従来どおり公開ERBとなる。投稿名、改行を保った説明、作成者、投稿日時、サムネイル、いいね・コメント数、本人のいいね状態を表示する。画像なし・画像読込失敗・旧データの空の投稿名にも対応する。更新操作は既存の投稿一覧にリンクする。
+投稿詳細はログイン済みのときだけ`GET /api/v1/contents/:id`を使い、APIの認証条件を維持する。未ログインでのHTML閲覧は従来どおり公開ERBとなる。投稿名、改行を保った説明、作成者、投稿日時、サムネイル、いいね・コメント数、本人のいいね状態を表示する。画像なし・画像読込失敗・旧データの空の投稿名にも対応する。コメント操作は既存の投稿一覧にリンクする。
+
+いいね操作を有効にすると、`GET /api/v1/me`でCSRFトークンを取得してから`PUT`または`DELETE /api/v1/contents/:id/like`を送る。送信中はボタンを無効にし、件数を先に増減させず、サーバーの応答を反映する。書き込みは自動再試行せず、オフラインの要求を再接続後へ保留しない。[TanStack QueryのMutation](https://tanstack.com/query/latest/docs/framework/react/guides/mutations)
+
+通信断の後はGETで現在の状態を確認する。確定済みなら表示を揃え、未反映なら同じ意図の再試行を案内する。GETも失敗した場合は新しい書き込みを止め、「状態を確認」でGETだけを送る。401・404は投稿詳細のログイン復帰・削除済み表示へつなぐ。ログイン後に古い操作を自動再送しない。画面を離れると未完了の要求を中断するが、サーバーで確定済みの更新は取り消さず、次回の取得で確認する。
 
 APIの通信失敗は再試行、404は対象がないこと、401は再ログインの案内を表示する。ログインリンクに`return_to=/contents/:id`を付け、Deviseのセッション内に戻り先を保存する。戻り先は正の整数IDを持つ投稿パスだけを許可し、外部URL・別画面・クエリー付きURLは受け付けない。投稿HTMLとAPIは`no-store`を返す。直接アクセスで対象がない場合は、RailsがHTTP 404と「投稿が見つかりません」のHTML画面を返す。本文が空の404応答でFirefoxが読み込み完了を待ち続けるケースも、この画面で確認する。JSONを要求した場合のエラー形式は維持する。
 
@@ -81,13 +88,13 @@ npm --prefix frontend run build
 専用DB・コンテナで本番用のRails設定、Sprocketsのprecompile、Vite成果物を使って新旧両画面を確認する。
 
 ```sh
-REACT_USERS_ENABLED=1 REACT_CONTENT_DETAIL_ENABLED=1 REACT_PROFILE_ENABLED=1 E2E_RAILS_ENV=production CI=true docker compose -f compose.e2e.yml up --build --abort-on-container-exit --exit-code-from e2e e2e
+REACT_USERS_ENABLED=1 REACT_CONTENT_DETAIL_ENABLED=1 REACT_PROFILE_ENABLED=1 REACT_LIKES_ENABLED=1 E2E_RAILS_ENV=production CI=true docker compose -f compose.e2e.yml up --build --abort-on-container-exit --exit-code-from e2e e2e
 docker compose -f compose.e2e.yml down -v --remove-orphans
-REACT_USERS_ENABLED=0 REACT_CONTENT_DETAIL_ENABLED=0 REACT_PROFILE_ENABLED=0 E2E_RAILS_ENV=production CI=true docker compose -f compose.e2e.yml up --build --abort-on-container-exit --exit-code-from e2e e2e
+REACT_USERS_ENABLED=0 REACT_CONTENT_DETAIL_ENABLED=0 REACT_PROFILE_ENABLED=0 REACT_LIKES_ENABLED=0 E2E_RAILS_ENV=production CI=true docker compose -f compose.e2e.yml up --build --abort-on-container-exit --exit-code-from e2e e2e
 docker compose -f compose.e2e.yml down -v --remove-orphans
 ```
 
-PC・モバイルChromiumで、3画面有効時は58件、すべて無効時は38件。既存の24件に加え、一覧のページ送り、投稿詳細の取得失敗・401・404・更新後の再取得、プロフィールの公開閲覧・画像・ページ送り・戻る操作・既存フォロー操作を確認する。セッションCookieを消して編集画面から戻った場合も、メールと編集リンクが残らないことを確認する。成功応答は実際のRailsを使う。
+PC・モバイルChromiumで、3画面といいねの有効時は70件、すべて無効時は42件。既存操作に加え、一覧・詳細・プロフィールの表示と復帰、いいねの連打・既存処理との同時送信・通信断・CSRF拒否・再接続・再ログインを確認する。応答消失の検証でも先に実際の更新要求をRailsへ送り、確定後にブラウザーへの応答を中断する。成功応答を作り物に置き換えない。
 
 ユーザー一覧の準備用20人は個別CookieとCSRFトークンで登録する。プロフィールのページ送り用20投稿は本人のCookieとCSRFトークンで既存の投稿先へ送信し、最後の1件は画面で投稿する。専用のテスト用APIは追加しない。HTMLのviewport指定も検査し、実際の端末幅で横にはみ出さないことを確認する。
 
@@ -99,6 +106,6 @@ E2E_PORT=43123 CI=true docker compose -f compose.e2e.yml -f compose.frontend-dev
 docker compose -f compose.e2e.yml -f compose.frontend-dev-test.yml down -v --remove-orphans
 ```
 
-ブラウザーで画像取得を失敗させ、コンポーネントの表示を変更しても、画像エラーの状態と同じHTML文書が保持されることをPCとモバイルで確認する。その後、Vite経由の投稿詳細とプロフィールへ移動して表示できることも確認する。
+ブラウザーで画像取得を失敗させ、コンポーネントの表示を変更しても、画像エラーの状態と同じHTML文書が保持されることをPCとモバイルで確認する。その後、Vite経由の投稿詳細でいいねを操作し、プロフィールまで表示できることも確認する。
 
-`E2E`ワークフローは3画面の新旧設定と開発時更新をPRごとに確認する。設定の独立性と成果物欠落時の切り戻しはRSpecで確認する。`Browser compatibility`は毎週土曜6時（日本時間）と手動実行でFirefox・WebKitを含む4構成、計116件を検証する。定期実行の設定を変更したPRでも起動する。各種ログ・トレース・レポートは7日間保存する。
+`E2E`ワークフローは3画面といいねの新旧設定、開発時更新をPRごとに確認する。設定の独立性と成果物欠落時の切り戻しはRSpecで確認する。`Browser compatibility`は毎週土曜6時（日本時間）と手動実行でFirefox・WebKitを含む4構成、計140件を検証する。定期実行の設定を変更したPRでも起動する。各種ログ・トレース・レポートは7日間保存する。

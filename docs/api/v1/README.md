@@ -1,6 +1,6 @@
-# 読み取りAPI v1
+# API v1
 
-Reactへの段階移行で使う、Railsと同じオリジンのJSON API。仕様の正本は[openapi.json](openapi.json)、生成したTypeScript型は[`types/api-v1`](../../../types/api-v1)に置く。新しい更新APIは後続のPRで追加する。
+Reactへの段階移行で使う、Railsと同じオリジンのJSON API。仕様の正本は[openapi.json](openapi.json)、生成したTypeScript型は[`types/api-v1`](../../../types/api-v1)に置く。読み取りに加えて、本人のいいね状態を登録・解除するAPIを提供する。
 
 | GETのパス | 認証 | 内容 |
 | --- | --- | --- |
@@ -37,7 +37,24 @@ Reactへの段階移行で使う、Railsと同じオリジンのJSON API。仕�
 
 DeviseのセッションCookieを引き継ぐ。同じオリジンから`fetch`し、APIの401を受けた画面がログインと復帰先を扱う。APIはログイン画面へリダイレクトしない。
 
-更新操作では`GET /api/v1/me`の`data.csrf_token`を`X-CSRF-Token`ヘッダーに付ける。ログイン・ログアウトなどでセッションが変わった後は取得し直す。CSRF保護を無効化しない。このPRの新APIは読み取り専用で、既存のフォーム・Rails UJSによる更新を継続する。
+更新操作では`GET /api/v1/me`の`data.csrf_token`を`X-CSRF-Token`ヘッダーに付ける。ログイン・ログアウトなどでセッションが変わった後は取得し直す。CSRF保護を無効化しない。いいねAPIはJSON/no-storeを設定し、認証を確認してからCSRFを検証する。ゲストは401、ログイン済みでトークンが不正なら422となる。
+
+## いいね状態の更新
+
+| メソッドとパス | 意味 |
+| --- | --- |
+| `PUT /api/v1/contents/{content_id}/like` | 本人のいいねを登録済みにする |
+| `DELETE /api/v1/contents/{content_id}/like` | 本人のいいねを解除済みにする |
+
+本文は不要。作成者はセッション、投稿はURLから決め、本文の`user_id`・`content_id`・like IDは使わない。同じ要求を繰り返しても重複登録や状態の反転を起こさない。成功時は200で次の状態を返す。
+
+```json
+{"data":{"content_id":1,"likes_count":3,"liked_by_current_user":true}}
+```
+
+既存一覧のRails UJSによるいいねも継続する。新旧双方の書き込みを同じ投稿行の`with_lock`内で実行し、同時要求でも新しい重複を作らない。既存の重複レコードがあってもPUTでは増やさず、DELETEは本人のその投稿へのいいねだけをすべて解除する。他人のいいねや別の投稿には触れない。DBの一括修正やスキーマ変更は行わない。[Railsの行ロック](https://api.rubyonrails.org/v5.2.8/classes/ActiveRecord/Locking/Pessimistic.html)
+
+フロントは送信前にCSRFトークンを取得し、送信中は操作を無効にする。書き込みは自動再試行しない。通信断の後は投稿GETで現在の状態を確認し、すでに反映済みなら表示を合わせる。未反映なら同じ意図を明示的に再試行でき、確認自体が失敗した場合は新しい書き込みを止めてGETのみの確認を案内する。
 
 既存更新処理では、プロフィールの簡易フォームを本人の名前・アバターに限定する。メールとパスワードの変更は、現在のパスワードを検証するDeviseのフォームを使う。コメントの作成者はセッションから、コメント・いいねの投稿はURLから決定し、削除は本人の関連から検索する。
 

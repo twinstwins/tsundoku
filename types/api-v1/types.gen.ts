@@ -118,6 +118,16 @@ export type ProfileContentsResponse = {
     meta: Pagination;
 };
 
+export type LikeState = {
+    content_id: number;
+    likes_count: number;
+    liked_by_current_user: boolean;
+};
+
+export type LikeStateResponse = {
+    data: LikeState;
+};
+
 export type Page = number;
 
 export type PerPage = number;
@@ -372,3 +382,79 @@ export type ListUserContentsResponses = {
 };
 
 export type ListUserContentsResponse = ListUserContentsResponses[keyof ListUserContentsResponses];
+
+export type UnlikeContentData = {
+    body?: never;
+    headers: {
+        'X-CSRF-Token': string;
+    };
+    path: {
+        content_id: number;
+    };
+    query?: never;
+    url: '/api/v1/contents/{content_id}/like';
+};
+
+export type UnlikeContentErrors = {
+    /**
+     * 401 未認証。HTMLへのリダイレクトはしない。
+     */
+    401: Error;
+    /**
+     * 404 対象なし。
+     */
+    404: Error;
+    /**
+     * CSRFトークンが不正。error.codeはinvalid_csrf_token。
+     */
+    422: Error;
+};
+
+export type UnlikeContentError = UnlikeContentErrors[keyof UnlikeContentErrors];
+
+export type UnlikeContentResponses = {
+    /**
+     * 要求した状態と現在の件数
+     */
+    200: LikeStateResponse;
+};
+
+export type UnlikeContentResponse = UnlikeContentResponses[keyof UnlikeContentResponses];
+
+export type LikeContentData = {
+    body?: never;
+    headers: {
+        'X-CSRF-Token': string;
+    };
+    path: {
+        content_id: number;
+    };
+    query?: never;
+    url: '/api/v1/contents/{content_id}/like';
+};
+
+export type LikeContentErrors = {
+    /**
+     * 401 未認証。HTMLへのリダイレクトはしない。
+     */
+    401: Error;
+    /**
+     * 404 対象なし。
+     */
+    404: Error;
+    /**
+     * CSRFトークンが不正。error.codeはinvalid_csrf_token。
+     */
+    422: Error;
+};
+
+export type LikeContentError = LikeContentErrors[keyof LikeContentErrors];
+
+export type LikeContentResponses = {
+    /**
+     * 要求した状態と現在の件数
+     */
+    200: LikeStateResponse;
+};
+
+export type LikeContentResponse = LikeContentResponses[keyof LikeContentResponses];
