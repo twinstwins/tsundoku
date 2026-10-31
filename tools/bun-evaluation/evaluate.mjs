@@ -161,7 +161,9 @@ async function devSmoke(mode, directory, iteration, cache) {
 async function productionSmoke(mode, directory) {
   const dist = path.join(directory, sample, 'dist');
   const destination = path.join(root, 'public/bun-evaluation');
-  await rm(destination, { recursive: true, force: true }); await cp(dist, destination, { recursive: true });
+  await mkdir(destination, { recursive: true });
+  for (const name of await readdir(destination)) await rm(path.join(destination, name), { recursive: true, force: true });
+  await cp(dist, destination, { recursive: true });
   const context = await browser.newContext(); const page = await context.newPage(); const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('response', response => { if (response.status() >= 400) errors.push(`${response.status()} ${response.url()}`); });

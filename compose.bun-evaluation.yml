@@ -4,7 +4,7 @@ services:
       sh -c 'bundle exec rails db:create db:migrate &&
       bundle exec ruby tools/bun-evaluation/rails-server.rb'
     volumes:
-      - .:/workdir
+      - ./public/bun-evaluation:/workdir/public/bun-evaluation
   e2e:
     build:
       context: .
