@@ -48,10 +48,12 @@ services:
     volumes:
       - .:/tests
       - e2e_node_modules:/tests/node_modules
-    command: sh -c 'npm ci && npm run typecheck && npm run test:e2e'
+      - api_types_node_modules:/tests/tools/api-types/node_modules
+    command: sh -c 'npm ci && npm --prefix tools/api-types ci && npm run api:types:check && npm run typecheck && npm run test:e2e'
     depends_on:
       web:
         condition: service_healthy
 
 volumes:
   e2e_node_modules:
+  api_types_node_modules:

@@ -1,4 +1,13 @@
 <%= form_with model: @content, local: true do |f| %>
+  <% if @content.errors.any? %>
+    <div role="alert">
+      <ul>
+        <% @content.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
   <div class="field">
     <%= f.label :name %>
     <%= f.text_field :name %>

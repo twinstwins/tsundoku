@@ -4,18 +4,20 @@ class RelationshipsController < ApplicationController
 
   
   def create
-    @user = User.find(params[:relationship][:following_id])
-    # current_user.follow!(@user)
-    # redirect_to @user
-    if current_user.follow!(@user)
+    attributes = request_attributes(:relationship, :following_id)
+    @user = User.find(attributes.require(:following_id))
+    @relationship = current_user.following_relationships.build(following: @user)
+    if @relationship.save
       respond_to :js
+    else
+      render_validation_errors(@relationship)
     end
   end
 
   def destroy
-    @user = Relationship.find(params[:id]).following
-    current_user.unfollow!(@user)
-    redirect_to @user
-    flash[:alert] = "フォローを解除しました"
+    @relationship = current_user.following_relationships.find(params[:id])
+    @user = @relationship.following
+    @relationship.destroy!
+    redirect_to @user, notice: 'フォローを解除しました'
   end
 end

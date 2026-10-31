@@ -32,7 +32,7 @@ Playwrightの固定ブラウザー環境と、開発用とは別のDB・アプ�
 docker compose -f compose.e2e.yml up --build --abort-on-container-exit --exit-code-from e2e e2e
 ```
 
-PCとモバイルのChromiumで、登録・ログイン・プロフィール・画像投稿・共有・いいね・コメント・フォローの10シナリオを実行します。テストごとにユーザーを生成し、特定のユーザーIDや前のテスト結果には依存しません。`http://localhost:43122`で確認用のアプリにアクセスできます。
+PCとモバイルのChromiumで、登録・ログイン・プロフィール・画像投稿・共有・いいね・コメント・フォローと、APIの認証・公開項目・CSRF・他人の更新拒否の12シナリオ（計24ケース）を実行します。テストごとにユーザーを生成し、特定のユーザーIDや前のテスト結果には依存しません。`http://localhost:43122`で確認用のアプリにアクセスできます。
 
 HTMLレポートは`playwright-report/`、失敗時のトレース・画像・動画は`test-results/`に出力します。コマンドはテスト結果を終了コードで返します。再実行前や検証後は、専用環境を片付けます。
 
@@ -57,6 +57,8 @@ npx playwright install chromium
 npm run test:e2e:ui
 ```
 
-GitHub Actionsの`E2E`ワークフローは、専用DBでのRSpec・TypeScriptの型チェック・E2EをPRごとに実行し、診断用ファイルを7日間保存します。ブラウザーでの操作は実際のRailsとMySQLに接続し、APIの成功応答を置き換える処理は使いません。
+GitHub Actionsの`E2E`ワークフローは、専用DBでのRSpec・API型の生成漏れ検査・TypeScriptの型チェック・E2EをPRごとに実行し、診断用ファイルを7日間保存します。ブラウザーでの操作は実際のRailsとMySQLに接続し、APIの成功応答を置き換える処理は使いません。
+
+読み取りAPIの公開範囲、セッションとCSRF、OpenAPIからの型生成は[APIの利用手順](docs/api/v1/README.md)を参照してください。
 
 React・TypeScript・Viteへの移行順序と完了条件は[フロントエンド移行計画](docs/frontend-modernization.md)を参照してください。
