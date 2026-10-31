@@ -19,6 +19,9 @@
 
 /node_modules
 /tools/api-types/node_modules/
+/tools/bun-evaluation/sample/node_modules/
+/tools/bun-evaluation/sample/dist/
+/public/bun-evaluation/
 /yarn-error.log
 
 /public/assets

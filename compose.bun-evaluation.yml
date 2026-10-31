@@ -1,0 +1,19 @@
+services:
+  web:
+    command: >-
+      sh -c 'bundle exec rails db:create db:migrate &&
+      bundle exec ruby tools/bun-evaluation/rails-server.rb'
+    volumes:
+      - ./public/bun-evaluation:/workdir/public/bun-evaluation
+  e2e:
+    build:
+      context: .
+      dockerfile: tools/bun-evaluation/Dockerfile
+    image: tsundoku-bun-evaluation:1.4.4
+    command: >-
+      sh -c 'npm ci && node tools/bun-evaluation/evaluate.mjs'
+    environment:
+      EVALUATION_LABEL: linux
+      EVALUATION_RUNS: ${EVALUATION_RUNS:-5}
+      EVALUATION_E2E_RUNS: ${EVALUATION_E2E_RUNS:-5}
+      EVALUATION_MODES: ${EVALUATION_MODES:-npm-node,bun-node,bun-bun}
