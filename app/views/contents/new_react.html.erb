@@ -1,0 +1,5 @@
+<% content_for :head do %><meta name="turbolinks-cache-control" content="no-cache"><% end %>
+<div data-react-page="content-form" data-user-id="<%= current_user.id %>" data-login-url="<%= new_user_session_path(return_to: new_content_path) %>">
+  <p role="status">投稿フォームを読み込み中…</p>
+</div>
+<noscript><p>投稿フォームを表示するにはJavaScriptを有効にしてください。</p></noscript>

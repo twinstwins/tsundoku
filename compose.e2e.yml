@@ -25,6 +25,7 @@ services:
       REACT_LIKES_ENABLED: ${REACT_LIKES_ENABLED:-0}
       REACT_COMMENTS_ENABLED: ${REACT_COMMENTS_ENABLED:-0}
       REACT_FOLLOWS_ENABLED: ${REACT_FOLLOWS_ENABLED:-0}
+      REACT_CONTENT_FORM_ENABLED: ${REACT_CONTENT_FORM_ENABLED:-0}
       SECRET_KEY_BASE: isolated-e2e-secret-not-used-outside-tests-0123456789abcdef0123456789abcdef
       RAILS_SERVE_STATIC_FILES: "1"
       DATABASE_URL: mysql2://root:password@db/Tsundoku_e2e
@@ -60,6 +61,7 @@ services:
       EXPECT_REACT_LIKES: ${REACT_LIKES_ENABLED:-0}
       EXPECT_REACT_COMMENTS: ${REACT_COMMENTS_ENABLED:-0}
       EXPECT_REACT_FOLLOWS: ${REACT_FOLLOWS_ENABLED:-0}
+      EXPECT_REACT_CONTENT_FORM: ${REACT_CONTENT_FORM_ENABLED:-0}
       E2E_ALL_BROWSERS: ${E2E_ALL_BROWSERS:-0}
     volumes:
       - .:/tests
@@ -69,7 +71,7 @@ services:
     command: >-
       sh -c 'npm ci && npm --prefix tools/api-types ci && npm --prefix frontend ci &&
       npm run api:types:check && npm run typecheck && npm --prefix frontend run typecheck &&
-      npm --prefix frontend test && npm run test:e2e && npm run test:e2e:react && npm run test:e2e:content && npm run test:e2e:profile && npm run test:e2e:likes && npm run test:e2e:comments && npm run test:e2e:follows'
+      npm --prefix frontend test && npm run test:e2e && npm run test:e2e:react && npm run test:e2e:content && npm run test:e2e:profile && npm run test:e2e:likes && npm run test:e2e:comments && npm run test:e2e:follows && npm run test:e2e:content-form'
     depends_on:
       web:
         condition: service_healthy

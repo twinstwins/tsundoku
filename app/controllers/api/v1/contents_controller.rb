@@ -1,7 +1,8 @@
 module Api
   module V1
     class ContentsController < BaseController
-      before_action :require_api_user!
+      prepend_before_action :require_api_user!
+      prepend_before_action :prepare_json_response
 
       def index
         relation = Content.all
@@ -18,7 +19,39 @@ module Api
         render json: { data: content_data([content]).first }
       end
 
+      def create
+        key = request.headers['Idempotency-Key']
+        return invalid_submission_key unless valid_submission_key?(key)
+        attributes = params.require(:content)
+        raise ActionController::ParameterMissing, :content unless attributes.is_a?(ActionController::Parameters)
+        input = { name: attributes[:name], description: attributes.key?(:description) ? attributes[:description] : '', image: attributes[:image] }
+        result = ContentSubmission.new(current_user, key, input).call
+        if result.conflict
+          render_request_error(:conflict, 'submission_conflict', '同じ送信識別子で別の内容は投稿できません')
+        elsif result.content
+          response.headers['Location'] = "/api/v1/contents/#{result.content.id}"
+          render json: { data: content_data([result.content]).first }, status: result.created ? :created : :ok
+        else
+          render_request_error(:unprocessable_entity, 'validation_error', '入力内容を確認してください', result.fields)
+        end
+      end
+
+      def submission
+        key = params[:submission_key]
+        return invalid_submission_key unless valid_submission_key?(key)
+        content = current_user.contents.includes(:user, :photos).find_by!(submission_key: key)
+        render json: { data: content_data([content]).first }
+      end
+
       private
+
+      def valid_submission_key?(key)
+        key.is_a?(String) && key.match?(ContentSubmission::KEY_PATTERN)
+      end
+
+      def invalid_submission_key
+        render_request_error(:unprocessable_entity, 'validation_error', '送信識別子が不正です', submission_key: ['UUID v4を指定してください'])
+      end
 
       def content_data(contents)
         ids = contents.map(&:id)

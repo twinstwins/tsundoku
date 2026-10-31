@@ -20,6 +20,8 @@ class ContentsController < ApplicationController
   end
 
   def new
+    response.headers['Cache-Control'] = 'no-store'
+    return render :new_react if frontend_assets.enabled?(:content_form)
     @content = Content.new
     @content.photos.build
   end

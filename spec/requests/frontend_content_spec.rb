@@ -124,8 +124,14 @@ RSpec.describe 'Content and profile login return', type: :request do
     expect(response).to redirect_to(user_path(user))
   end
 
+  it 'returns to the new post form after signing in' do
+    get new_user_session_path, params: { return_to: new_content_path }
+    post user_session_path, params: { user: { email: user.email, password: 'password' } }
+    expect(response).to redirect_to(new_content_path)
+  end
+
   it 'ignores external, malformed, and unrelated return destinations' do
-    ['https://other.test/contents/1', '//other.test/contents/1', '/users/1/edit', '/users/1?next=other', '/users/0', '/contents/1?next=other', '/contents/../users', ['/contents/1']].each do |path|
+    ['https://other.test/contents/1', '//other.test/contents/1', '/users/1/edit', '/users/1?next=other', '/users/0', '/contents/new?next=other', '/contents/1?next=other', '/contents/../users', ['/contents/1']].each do |path|
       reset!
       get new_user_session_path, params: { return_to: path }
       post user_session_path, params: { user: { email: user.email, password: 'password' } }

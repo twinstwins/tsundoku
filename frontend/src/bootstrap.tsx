@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import UsersPage from './pages/UsersPage';
 import ContentPage from './pages/ContentPage';
+import ContentFormPage from './pages/ContentFormPage';
 import ProfileHeader from './pages/ProfileHeader';
 import ProfilePosts from './pages/ProfilePosts';
 import { usersPage } from './api/users';
@@ -18,6 +19,7 @@ export function startFrontendPages() {
       switch (element.dataset.reactPage) {
         case 'users': page = <UsersPage page={usersPage(window.location.search)} pathname={window.location.pathname} />; break;
         case 'content': page = <ContentPage id={id!} loginUrl={element.dataset.loginUrl!} likesEnabled={element.dataset.likesEnabled === 'true'} commentsEnabled={element.dataset.commentsEnabled === 'true'} />; break;
+        case 'content-form': page = <ContentFormPage userId={id!} loginUrl={element.dataset.loginUrl!} />; break;
         case 'profile': page = <ProfileHeader id={id!} followsEnabled={element.dataset.followsEnabled === 'true'} loginUrl={element.dataset.loginUrl!} />; break;
         case 'profile-posts': page = <ProfilePosts id={id!} page={usersPage(window.location.search)} pathname={window.location.pathname} />; break;
         default: continue;
