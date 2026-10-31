@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Tsundoku Read API",
+    "title": "Tsundoku API",
     "version": "1.0.0",
-    "description": "同一オリジンのセッション認証。全応答はCache-Control: no-store。リストはID降順。メールとCSRFトークンは本人用の/meだけに含む。書き込みAPIは次の移行段階で追加する。"
+    "description": "同一オリジンのセッション認証。全応答はCache-Control: no-store。リストはID降順。メールとCSRFトークンは本人用の/meだけに含む。いいね更新は本人のセッションとCSRFトークンを検証する。"
   },
   "servers": [
     {
@@ -284,6 +284,124 @@
           },
           "422": {
             "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/api/v1/contents/{content_id}/like": {
+      "put": {
+        "operationId": "likeContent",
+        "summary": "本人のいいねを登録済みにする",
+        "description": "同じ要求の繰り返しでも最終状態は同じ。作成者はセッション、投稿はURLから決め、本文のuser_idやlike IDは使わない。X-CSRF-TokenにGET /api/v1/meのトークンを付ける。",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "content_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "要求した状態と現在の件数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LikeStateResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "CSRFトークンが不正。error.codeはinvalid_csrf_token。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "unlikeContent",
+        "summary": "本人のいいねを解除済みにする",
+        "description": "同じ要求の繰り返しでも最終状態は同じ。作成者はセッション、投稿はURLから決め、本文のuser_idやlike IDは使わない。X-CSRF-TokenにGET /api/v1/meのトークンを付ける。",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "content_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "要求した状態と現在の件数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LikeStateResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "description": "CSRFトークンが不正。error.codeはinvalid_csrf_token。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -665,6 +783,41 @@
           },
           "meta": {
             "$ref": "#/components/schemas/Pagination"
+          }
+        }
+      },
+      "LikeState": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "content_id",
+          "likes_count",
+          "liked_by_current_user"
+        ],
+        "properties": {
+          "content_id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "likes_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "liked_by_current_user": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LikeStateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/LikeState"
           }
         }
       }

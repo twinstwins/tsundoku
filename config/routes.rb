@@ -7,7 +7,9 @@ Rails.application.routes.draw do
           get :following, :followers, :contents
         end
       end
-      resources :contents, only: [:index, :show]
+      resources :contents, only: [:index, :show] do
+        resource :like, only: [:update, :destroy]
+      end
     end
   end
   devise_for :users, :controllers => {

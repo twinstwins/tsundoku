@@ -30,6 +30,13 @@ RSpec.describe FrontendAssets do
     expect(assets({}).enabled?).to be(false)
   end
 
+  it 'enables like controls independently without enabling a React page' do
+    instance = assets('REACT_LIKES_ENABLED' => '1')
+    expect(instance.likes_enabled?).to be(true)
+    expect(instance.enabled?).to be(false)
+    expect(assets({}).likes_enabled?).to be(false)
+  end
+
   it 'enables the shared entry while keeping each page flag independent' do
     manifest(entry)
     users = assets('REACT_USERS_ENABLED' => '1')

@@ -19,6 +19,25 @@ RSpec.describe 'Frontend content detail', type: :request do
     expect(response.body).not_to include('data-react-page')
   end
 
+  it 'passes the independent like flag to React while keeping the read-only default' do
+    sign_in user
+    [false, true].each do |enabled|
+      allow(FrontendAssets).to receive(:new).and_call_original
+      frontend('REACT_CONTENT_DETAIL_ENABLED' => '1', 'REACT_LIKES_ENABLED' => enabled ? '1' : '0', 'VITE_DEV_SERVER_URL' => 'http://frontend:5173')
+      get content_path(content)
+      root = Nokogiri::HTML(response.body).at_css('[data-react-page="content"]')
+      expect(root['data-likes-enabled']).to eq(enabled.to_s)
+    end
+  end
+
+  it 'keeps the legacy detail when only the like flag is enabled' do
+    sign_in user
+    frontend('REACT_LIKES_ENABLED' => '1', 'VITE_DEV_SERVER_URL' => 'http://frontend:5173')
+    get content_path(content)
+    expect(response.body).to include(content.name)
+    expect(response.body).not_to include('data-react-page')
+  end
+
   it 'enables content independently of the directory and passes the login return URL' do
     sign_in user
     frontend('REACT_CONTENT_DETAIL_ENABLED' => '1', 'VITE_DEV_SERVER_URL' => 'http://frontend:5173')
