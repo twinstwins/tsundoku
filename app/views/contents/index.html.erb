@@ -10,7 +10,7 @@
   <div class="card-body">
   <% @users.each do |user| %>
    <% user.contents.each do |content| %>
-    <p><%= content.name %>さんの投稿</p>
+    <p data-testid="content-title" data-content-id="<%= content.id %>"><%= content.name %>さんの投稿</p>
     <p><%= link_to content.user.name , user_path(user) %> </p>
     <p><%= content.description %></p>
     <%= link_to time_ago_in_words(content.created_at).upcase + "前", "#" %>
@@ -20,7 +20,7 @@
           <%= image_tag photo.image.thumb.url %>
         <% end %>
       <% end %>
-    <div id="like-icon-post-<%= content.id.to_s %>">
+    <div id="like-icon-post-<%= content.id.to_s %>" data-testid="content-likes" data-content-id="<%= content.id %>">
       <% if content.liked_by(current_user).present? %>
         <%= link_to "いいねを取り消す", content_like_path(content.id, content.liked_by(current_user)), method: :DELETE, remote: true, class: "loved hide-text" %>
       <% else %>
@@ -31,13 +31,13 @@
         <%= render "like_text", { likes: content.likes } %>
    </div>
 
-    <div id="comment-post-<%= content.id.to_s %>">
+    <div id="comment-post-<%= content.id.to_s %>" data-testid="content-comments" data-content-id="<%= content.id %>">
        <%= render 'comment_list', { content: content } %>
     </div>
         <%= link_to time_ago_in_words(content.created_at).upcase + "前", content_path(content),
         class: "light-color post-time no-text-decoration" %>
         <hr>
-     <div class="row actions" id="comment-form-post-<%= content.id.to_s %>">
+     <div class="row actions" id="comment-form-post-<%= content.id.to_s %>" data-testid="comment-form" data-content-id="<%= content.id %>">
        <%= form_with model: [content, Comment.new], class: "w-100" do |f| %>
        <%= f.hidden_field :user_id, value: current_user.id %>
        <%= f.hidden_field :content_id, value: content.id %>
@@ -46,7 +46,7 @@
      <% end %>
      </div>
      <h2>以下にリツイート的な機能を実装</h2>
-     <%= form_with model: [current_user, Content.new], url: contents_path, method: :post, local: true do |f| %>
+     <%= form_with model: [current_user, Content.new], url: contents_path, method: :post, local: true, data: { testid: 'share-form', content_id: content.id } do |f| %>
 
          <%= f.hidden_field :name, value: "#{content.name}"%>
          <%= f.text_field :description,value: "#{content.description}" %>

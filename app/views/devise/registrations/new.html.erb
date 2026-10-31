@@ -8,7 +8,7 @@
   <%= render "devise/shared/error_messages", resource: resource %>
 
   <button type="button" class="btn btn-outline-secondary rounded-pill">
-         <%= f.file_field :avatar, accept: 'image/jpeg,image/gif,image/png' %>
+         <%= f.file_field :avatar, accept: 'image/jpeg,image/gif,image/png', aria: { label: 'プロフィール画像' } %>
   </button>
 
   <div class="field">

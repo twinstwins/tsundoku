@@ -1,0 +1,49 @@
+name: E2E
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Build Rails app
+        run: docker compose -f compose.e2e.yml build web
+      - name: Rails regression tests
+        run: >-
+          docker compose -f compose.e2e.yml run --rm
+          -e RAILS_ENV=test
+          -e DATABASE_URL=mysql2://root:password@db/Tsundoku_e2e_rspec
+          web sh -c 'bundle exec rails db:create db:schema:load && bundle exec rspec'
+      - name: Browser tests on desktop and mobile
+        run: docker compose -f compose.e2e.yml up --abort-on-container-exit --exit-code-from e2e e2e
+        env:
+          CI: "true"
+      - name: Collect service logs
+        if: always()
+        run: docker compose -f compose.e2e.yml logs --no-color > e2e-docker.log 2>&1
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: e2e-results
+          path: |
+            playwright-report/
+            test-results/
+            e2e-docker.log
+          retention-days: 7
+      - name: Remove isolated test environment
+        if: always()
+        run: docker compose -f compose.e2e.yml down -v --remove-orphans
