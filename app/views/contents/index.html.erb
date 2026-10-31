@@ -46,7 +46,7 @@
      <% end %>
      </div>
      <h2>以下にリツイート的な機能を実装</h2>
-     <%= form_with model: [current_user, Content.new], url: contents_path, method: :post  do |f| %>
+     <%= form_with model: [current_user, Content.new], url: contents_path, method: :post, local: true do |f| %>
 
          <%= f.hidden_field :name, value: "#{content.name}"%>
          <%= f.text_field :description,value: "#{content.description}" %>

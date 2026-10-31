@@ -1,15 +1,20 @@
-version: '3'
 services:
   db: # database.ymlと対応したものを読み込みます
     image: mysql:5.6 # もともと5.6で動かしていたので
+    platform: linux/amd64
     environment:
-      MYSQL_USER: root
       MYSQL_ROOT_PASSWORD: password
     volumes:
       - ./mysql/mysql_data:/mysql # データの永続化
     ports:
       - "4306:3306" # ホストからゲストへポートフォワード。sequelProと繋ぎたいので、3306ではなく4306をポートに指定
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
   web: # さっき書いたDockerfileをwebって名前で扱うよ、って感じです
+    platform: linux/amd64
     build:
       context: .
       dockerfile: Dockerfile
@@ -18,7 +23,8 @@ services:
     tty: true
     stdin_open: true
     depends_on:
-      - db # DB側のコンテナが出来上がってからwebを実行する
+      db:
+        condition: service_healthy
     ports:
       - "3000:3000" # ホストからゲストへポートフォワード
     volumes:

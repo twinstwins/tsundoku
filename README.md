@@ -1,24 +1,25 @@
-# README
+# Tsundoku
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+## ローカルで起動する
 
-Things you may want to cover:
+Docker DesktopとDocker Composeを使用します。既存アプリに合わせて、Ruby 2.5.1、Bundler 2.1.4、Node.js 10.24.1、MySQL 5.6を使用しています。Apple Siliconでも実行できるよう、Composeでは`linux/amd64`を指定しています。
 
-* Ruby version
+初回はイメージをビルドし、データベースを作成してマイグレーションを実行します。
 
-* System dependencies
+```sh
+docker compose build
+docker compose run --rm web bundle exec rails db:create db:migrate
+docker compose up
+```
 
-* Configuration
+ブラウザーで[http://localhost:3000](http://localhost:3000)を開き、ログイン画面からアカウントを新規登録できます。初期ユーザーの投入は不要です。
 
-* Database creation
+2回目以降の起動は`docker compose up`です。停止するには、実行中のターミナルでCtrl+Cを押します。
 
-* Database initialization
+## テストを実行する
 
-* How to run the test suite
+```sh
+docker compose run --rm web bundle exec rspec
+```
 
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+テストには`Tsundoku_test`データベースを使用します。

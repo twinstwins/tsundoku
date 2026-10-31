@@ -1,22 +1,17 @@
+FROM node:10.24.1-stretch-slim AS node
 FROM ruby:2.5.1
 
-RUN apt-get update && apt-get install -y nodejs --no-install-recommends && rm -rf /var/lib/apt/lists/*
-RUN apt-get update && apt-get install -y mysql-client --no-install-recommends && rm -rf /var/lib/apt/lists/*
-RUN apt-get update -qq && apt-get install -y build-essential libpq-dev nodejs
-RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
-        && apt-get install -y nodejs
-# Docker内部でworkdirをどこに置くか、どういう名前にするかを決める記述
-RUN mkdir /workdir
+# The Ruby image already includes the build tools, MySQL headers,
+# ImageMagick and MIME database needed by the locked gems.
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+
+ENV BUNDLER_VERSION=2.1.4
 WORKDIR /workdir
 
-# Docker内部でGemfile、Gemfile.lockをどこに配置するかを決める記述
-ADD Gemfile /workdir/Gemfile
-ADD Gemfile.lock /workdir/Gemfile.lock
+COPY Gemfile Gemfile.lock ./
+RUN gem install bundler --version "${BUNDLER_VERSION}" --no-document \
+    && bundle install --jobs 4 --retry 3
 
-# 注意！！ Gemfile.lockにかいてあるbundlerバージョンが2.0.1以降だとエラーが出ます！
-# 僕の場合はここで環境設定してあげれば通りました。
-ENV BUNDLER_VERSION 2.1.4
-RUN gem install bundler
-RUN bundle install
+COPY . .
 
-ADD . /workdir
+CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]
