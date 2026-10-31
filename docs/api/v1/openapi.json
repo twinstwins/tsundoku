@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsundoku API",
     "version": "1.0.0",
-    "description": "同一オリジンのセッション認証。全応答はCache-Control: no-store。リストはID降順。メールとCSRFトークンは本人用の/meだけに含む。いいね更新は本人のセッションとCSRFトークンを検証する。"
+    "description": "同一オリジンのセッション認証。全応答はCache-Control: no-store。リストはID降順。メールとCSRFトークンは本人用の/meだけに含む。いいね・コメント更新は本人のセッションとCSRFトークンを検証する。"
   },
   "servers": [
     {
@@ -402,6 +402,191 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/contents/{content_id}/comments": {
+      "get": {
+        "operationId": "listComments",
+        "summary": "ログイン済みユーザー向けコメント一覧",
+        "description": "ID降順でページング。本人のコメントもページとは独立して返す。メール・CSRFトークンは含めない。",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "content_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "コメントと本人の状態",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createComment",
+        "summary": "本人のコメントを作成",
+        "description": "作成者はセッション、投稿はURLから決める。空欄・重複は422で、既存コメントを上書きしない。新旧書き込みは投稿行のロック内で処理する。",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "content_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "作成したコメントと件数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "本文のリソースが不足・不正",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/api/v1/contents/{content_id}/comments/{id}": {
+      "delete": {
+        "operationId": "deleteComment",
+        "summary": "本人のコメントを削除",
+        "description": "本人の関連からURLの投稿とコメントIDを照合する。他人・別投稿・削除済みのIDは404。再送せず、GETで削除済みか確認する。",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "content_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "削除したIDと件数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteCommentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       }
@@ -818,6 +1003,146 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/LikeState"
+          }
+        }
+      },
+      "Comment": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "content_id",
+          "comment",
+          "created_at",
+          "user",
+          "owned_by_current_user"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "content_id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "comment": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserSummary"
+          },
+          "owned_by_current_user": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CommentsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data",
+          "meta",
+          "current_user_comment"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Comment"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Pagination"
+          },
+          "current_user_comment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Comment"
+              }
+            ],
+            "nullable": true,
+            "description": "現在のページに含まれなくても本人の最初のコメントを返す。未投稿はnull。"
+          }
+        }
+      },
+      "CreateCommentRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "comment"
+        ],
+        "properties": {
+          "comment": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "comment"
+            ],
+            "properties": {
+              "comment": {
+                "type": "string",
+                "minLength": 1,
+                "description": "空白だけは不可。1ユーザー・1投稿につき1件。"
+              }
+            }
+          }
+        }
+      },
+      "CommentResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data",
+          "comments_count"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Comment"
+          },
+          "comments_count": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "DeleteCommentResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "content_id",
+              "comments_count"
+            ],
+            "properties": {
+              "id": {
+                "type": "integer",
+                "format": "int64",
+                "minimum": 1
+              },
+              "content_id": {
+                "type": "integer",
+                "format": "int64",
+                "minimum": 1
+              },
+              "comments_count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
           }
         }
       }

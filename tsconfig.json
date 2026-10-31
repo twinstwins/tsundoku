@@ -24,6 +24,8 @@
     "playwright.profile.config.ts",
     "e2e-profile/**/*.ts",
     "playwright.likes.config.ts",
-    "e2e-likes/**/*.ts"
+    "e2e-likes/**/*.ts",
+    "playwright.comments.config.ts",
+    "e2e-comments/**/*.ts"
   ]
 }

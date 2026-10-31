@@ -1,0 +1,13 @@
+.section { border-top: 1px solid #d2dce3; margin-top: 32px; padding-top: 24px; }
+.heading { font-size: 1.25rem; font-weight: 700; }
+.list { padding: 0; list-style: none; }
+.list li { border-bottom: 1px solid #d2dce3; padding: 16px 0; }
+.text { white-space: pre-wrap; overflow-wrap: anywhere; margin: 8px 0; }
+.list time { color: #526676; font-size: .9rem; }
+.own { padding: 16px; background: #eef5f9; border-radius: 8px; }
+.form { display: grid; gap: 12px; margin: 24px 0; }
+.form textarea { width: 100%; max-width: 100%; padding: 10px; border: 1px solid #667985; border-radius: 6px; font: inherit; }
+.section button { width: fit-content; max-width: 100%; border: 1px solid #125a85; border-radius: 8px; background: #fff; color: #125a85; padding: 10px 14px; font: inherit; cursor: pointer; }
+.section button:disabled { opacity: .65; cursor: default; }
+.section button:focus-visible, .form textarea:focus-visible { outline: 3px solid #358ac0; outline-offset: 4px; }
+.pagination { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }

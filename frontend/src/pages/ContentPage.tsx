@@ -3,11 +3,12 @@ import { ContentRequestError, fetchContent } from '../api/contents';
 import UserAvatar from '../components/UserAvatar';
 import ContentPhoto from '../components/ContentPhoto';
 import LikeControls from '../components/LikeControls';
+import CommentsSection from '../components/CommentsSection';
 import styles from './ContentPage.module.css';
 
 const dateFormat = new Intl.DateTimeFormat('ja-JP', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Asia/Tokyo' });
 
-export default function ContentPage({ id, loginUrl, likesEnabled = false }: { id: string; loginUrl: string; likesEnabled?: boolean }) {
+export default function ContentPage({ id, loginUrl, likesEnabled = false, commentsEnabled = false }: { id: string; loginUrl: string; likesEnabled?: boolean; commentsEnabled?: boolean }) {
   const content = useQuery({ queryKey: ['content', id], queryFn: ({ signal }) => fetchContent(id, signal) });
   if (content.isPending) return <main className={styles.page}><p role="status">投稿を読み込み中…</p></main>;
   if (content.isError) {
@@ -41,7 +42,8 @@ export default function ContentPage({ id, loginUrl, likesEnabled = false }: { id
       </dl>
       {post.liked_by_current_user && <p>この投稿にいいねしています</p>}
       {likesEnabled && <LikeControls id={id} liked={post.liked_by_current_user} />}
-      <p className={styles.meta}>{likesEnabled ? 'コメントは' : 'いいね・コメントは'}<a href={`/contents#like-icon-post-${post.id}`}>投稿一覧で操作できます</a>。</p>
+      {(!likesEnabled || !commentsEnabled) && <p className={styles.meta}>{likesEnabled ? 'コメントは' : commentsEnabled ? 'いいねは' : 'いいね・コメントは'}<a href={`/contents#like-icon-post-${post.id}`}>投稿一覧で操作できます</a>。</p>}
+      {commentsEnabled && <CommentsSection id={id} loginUrl={loginUrl} />}
     </article>
   </main>;
 }

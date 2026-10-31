@@ -99,6 +99,8 @@ test('session expiry offers login and return without automatically replaying the
   await visit(page, post.path);
   const like = page.getByRole('button', { name: 'いいね', exact: true });
   await expect(like).toBeEnabled();
+  // Finish the new section's initial response before clearing the session cookie.
+  if (process.env.EXPECT_REACT_COMMENTS === '1') await expect(page.getByRole('button', { name: 'コメントを投稿', exact: true })).toBeEnabled();
   let writes = 0;
   page.on('request', request => { if (request.url().endsWith(`/contents/${post.id}/like`)) writes++; });
   await page.context().clearCookies();

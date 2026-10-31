@@ -34,7 +34,11 @@ test('Rails loads Vite modules and React Refresh preserves image fallback state'
   await page.getByRole('button', { name: 'いいね', exact: true }).click();
   await expect(page.getByRole('button', { name: 'いいねを取り消す', exact: true })).toBeEnabled();
   await expect(page.locator('dd')).toHaveText(['1', '0']);
-  await page.getByRole('link', { name: user.name, exact: true }).click();
+  await page.getByLabel('コメントを書く', { exact: true }).fill('開発サーバーからの感想');
+  await page.getByRole('button', { name: 'コメントを投稿', exact: true }).click();
+  await expect(page.getByRole('list', { name: '投稿へのコメント' })).toContainText('開発サーバーからの感想');
+  await expect(page.locator('dd')).toHaveText(['1', '1']);
+  await page.getByRole('list', { name: '投稿へのコメント' }).getByRole('link', { name: user.name, exact: true }).click();
   await expect(page.getByRole('heading', { name: `${user.name}のページ`, exact: true })).toBeVisible();
   await expect(page.locator('[data-react-page="profile"]')).toHaveCount(1);
   await expect(page.locator('[data-react-page="profile-posts"]')).toHaveCount(1);

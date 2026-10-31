@@ -54,6 +54,14 @@ RSpec.describe FrontendAssets do
     expect(profile.enabled?(:content)).to be(false)
   end
 
+  it 'keeps comments disabled by default and independent of pages and likes' do
+    instance = assets('REACT_COMMENTS_ENABLED' => '1')
+    expect(instance.comments_enabled?).to be(true)
+    expect(instance.likes_enabled?).to be(false)
+    expect(instance.enabled?).to be(false)
+    expect(assets({}).comments_enabled?).to be(false)
+  end
+
   it 'reads transitive imports and orders shared CSS before entry CSS once' do
     data = entry('imports' => ['shared', 'nested'])
     data['shared'] = { 'file' => 'assets/shared.js', 'css' => ['assets/shared.css'], 'imports' => ['nested'] }

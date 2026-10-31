@@ -54,6 +54,25 @@ RSpec.describe 'Frontend content detail', type: :request do
     expect(response.body).to include(user.name)
   end
 
+  it 'passes the independent comment flag without enabling likes' do
+    sign_in user
+    [false, true].each do |enabled|
+      allow(FrontendAssets).to receive(:new).and_call_original
+      frontend('REACT_CONTENT_DETAIL_ENABLED' => '1', 'REACT_COMMENTS_ENABLED' => enabled ? '1' : '0', 'VITE_DEV_SERVER_URL' => 'http://frontend:5173')
+      get content_path(content)
+      root = Nokogiri::HTML(response.body).at_css('[data-react-page="content"]')
+      expect(root['data-comments-enabled']).to eq(enabled.to_s)
+      expect(root['data-likes-enabled']).to eq('false')
+    end
+  end
+
+  it 'keeps the legacy detail when only comments are enabled' do
+    sign_in user
+    frontend('REACT_COMMENTS_ENABLED' => '1', 'VITE_DEV_SERVER_URL' => 'http://frontend:5173')
+    get content_path(content)
+    expect(response.body).not_to include('data-react-page')
+  end
+
   it 'keeps the existing public view for guests and still protects the content API' do
     frontend('REACT_CONTENT_DETAIL_ENABLED' => '1', 'VITE_DEV_SERVER_URL' => 'http://frontend:5173')
     get content_path(content)
