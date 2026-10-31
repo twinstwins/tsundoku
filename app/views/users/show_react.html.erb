@@ -1,0 +1,13 @@
+<% content_for :head do %><meta name="turbolinks-cache-control" content="no-cache"><% end %>
+<main class="container py-4">
+  <div data-react-page="profile" data-user-id="<%= @user.id %>">
+    <p role="status">プロフィールを読み込み中…</p>
+  </div>
+  <section aria-label="プロフィールの操作" class="mb-4">
+    <%= render 'profile_actions' %>
+  </section>
+  <div data-react-page="profile-posts" data-user-id="<%= @user.id %>">
+    <p role="status">投稿を読み込み中…</p>
+  </div>
+  <noscript><p>プロフィールを表示するにはJavaScriptを有効にしてください。</p></noscript>
+</main>

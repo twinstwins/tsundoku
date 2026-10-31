@@ -102,6 +102,22 @@ export type MeResponse = {
     data: Me;
 };
 
+/**
+ * 既存の公開プロフィールと同じ投稿項目。本人情報や閲覧者別の状態は含まない。
+ */
+export type ProfileContent = {
+    id: number;
+    name: string;
+    description: string | null;
+    created_at: string;
+    photos: Array<Photo>;
+};
+
+export type ProfileContentsResponse = {
+    data: Array<ProfileContent>;
+    meta: Pagination;
+};
+
 export type Page = number;
 
 export type PerPage = number;
@@ -322,3 +338,37 @@ export type GetContentResponses = {
 };
 
 export type GetContentResponse = GetContentResponses[keyof GetContentResponses];
+
+export type ListUserContentsData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: {
+        page?: number;
+        per_page?: number;
+    };
+    url: '/api/v1/users/{id}/contents';
+};
+
+export type ListUserContentsErrors = {
+    /**
+     * 404 対象なし。
+     */
+    404: Error;
+    /**
+     * 422 入力不正。fieldsに項目別メッセージを返す。
+     */
+    422: Error;
+};
+
+export type ListUserContentsError = ListUserContentsErrors[keyof ListUserContentsErrors];
+
+export type ListUserContentsResponses = {
+    /**
+     * 成功
+     */
+    200: ProfileContentsResponse;
+};
+
+export type ListUserContentsResponse = ListUserContentsResponses[keyof ListUserContentsResponses];

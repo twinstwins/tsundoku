@@ -1,25 +1,32 @@
-import { StrictMode } from 'react';
+import { StrictMode, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import UsersPage from './pages/UsersPage';
 import ContentPage from './pages/ContentPage';
+import ProfileHeader from './pages/ProfileHeader';
+import ProfilePosts from './pages/ProfilePosts';
 import { usersPage } from './api/users';
 
 export function startFrontendPages() {
   const mounted = new Map<HTMLElement, { root: Root; client: QueryClient }>();
   function mount() {
-    const element = document.querySelector<HTMLElement>('[data-react-page="users"], [data-react-page="content"]');
-    if (!element || mounted.has(element)) return;
-    const contentId = element.dataset.contentId;
-    if (element.dataset.reactPage === 'content' && (!contentId || !/^[1-9]\d*$/.test(contentId))) return;
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } } });
-    const root = createRoot(element);
-    mounted.set(element, { root, client });
-    root.render(<StrictMode><QueryClientProvider client={client}>
-      {element.dataset.reactPage === 'users'
-        ? <UsersPage page={usersPage(window.location.search)} pathname={window.location.pathname} />
-        : <ContentPage id={contentId!} loginUrl={element.dataset.loginUrl!} />}
-    </QueryClientProvider></StrictMode>);
+    for (const element of document.querySelectorAll<HTMLElement>('[data-react-page]')) {
+      if (mounted.has(element)) continue;
+      const id = element.dataset.reactPage === 'content' ? element.dataset.contentId : element.dataset.userId;
+      if (element.dataset.reactPage !== 'users' && (!id || !/^[1-9]\d*$/.test(id))) continue;
+      let page: ReactNode;
+      switch (element.dataset.reactPage) {
+        case 'users': page = <UsersPage page={usersPage(window.location.search)} pathname={window.location.pathname} />; break;
+        case 'content': page = <ContentPage id={id!} loginUrl={element.dataset.loginUrl!} />; break;
+        case 'profile': page = <ProfileHeader id={id!} />; break;
+        case 'profile-posts': page = <ProfilePosts id={id!} page={usersPage(window.location.search)} pathname={window.location.pathname} />; break;
+        default: continue;
+      }
+      const client = new QueryClient({ defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } } });
+      const root = createRoot(element);
+      mounted.set(element, { root, client });
+      root.render(<StrictMode><QueryClientProvider client={client}>{page}</QueryClientProvider></StrictMode>);
+    }
   }
   function unmount() {
     for (const { root, client } of mounted.values()) { root.unmount(); client.clear(); }

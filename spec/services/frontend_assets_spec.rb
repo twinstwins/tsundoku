@@ -30,7 +30,7 @@ RSpec.describe FrontendAssets do
     expect(assets({}).enabled?).to be(false)
   end
 
-  it 'enables the shared entry while keeping the two page flags independent' do
+  it 'enables the shared entry while keeping each page flag independent' do
     manifest(entry)
     users = assets('REACT_USERS_ENABLED' => '1')
     content = assets('REACT_CONTENT_DETAIL_ENABLED' => '1')
@@ -40,6 +40,11 @@ RSpec.describe FrontendAssets do
     expect(content.enabled?).to be(true)
     expect(content.enabled?(:users)).to be(false)
     expect(content.enabled?(:content)).to be(true)
+    profile = assets('REACT_PROFILE_ENABLED' => '1')
+    expect(profile.enabled?).to be(true)
+    expect(profile.enabled?(:profile)).to be(true)
+    expect(profile.enabled?(:users)).to be(false)
+    expect(profile.enabled?(:content)).to be(false)
   end
 
   it 'reads transitive imports and orders shared CSS before entry CSS once' do

@@ -4,7 +4,7 @@ Rails.application.routes.draw do
       resource :me, only: :show, controller: 'me'
       resources :users, only: [:index, :show] do
         member do
-          get :following, :followers
+          get :following, :followers, :contents
         end
       end
       resources :contents, only: [:index, :show]
