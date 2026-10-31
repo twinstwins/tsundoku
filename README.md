@@ -32,7 +32,7 @@ Playwrightの固定ブラウザー環境と、開発用とは別のDB・アプ�
 docker compose -f compose.e2e.yml up --build --abort-on-container-exit --exit-code-from e2e e2e
 ```
 
-PCとモバイルのChromiumで、登録・ログイン・プロフィール・画像投稿・共有・いいね・コメント・フォローと、APIの認証・公開項目・CSRF・他人の更新拒否の12シナリオ（計24ケース）に加え、ユーザー一覧・投稿詳細・公開プロフィールといいね・コメント・フォローAPIを確認します。既定の既存画面では計50件、React版の3画面といいね・コメント・フォロー操作を有効にすると計102件です。テストごとにユーザーを生成し、特定のユーザーIDや前のテスト結果には依存しません。`http://localhost:43122`で確認用のアプリにアクセスできます。
+PCとモバイルのChromiumで、登録・ログイン・プロフィール・画像投稿・共有・いいね・コメント・フォローと、APIの認証・公開項目・CSRF・他人の更新拒否の12シナリオ（計24ケース）に加え、ユーザー一覧・投稿詳細・公開プロフィール・投稿フォームと更新APIを確認します。既定の既存画面では計54件、React版の4画面といいね・コメント・フォロー操作を有効にすると計118件です。テストごとにユーザーを生成し、特定のユーザーIDや前のテスト結果には依存しません。`http://localhost:43122`で確認用のアプリにアクセスできます。
 
 HTMLレポートは`playwright-report/`、失敗時のトレース・画像・動画は`test-results/`に出力します。コマンドはテスト結果を終了コードで返します。再実行前や検証後は、専用環境を片付けます。
 
@@ -65,4 +65,4 @@ React・TypeScript・Viteへの移行順序と完了条件は[フロントエン
 
 Bunの比較検証では、今回はNode.jsとnpmを継続する判断にしました。[測定結果と採用判断](docs/bun-evaluation.md)、[検証の再実行手順](tools/bun-evaluation/README.md)を参照してください。
 
-ユーザー一覧・ログイン済み投稿詳細・公開プロフィールのReact版を追加しました。初期状態は既存画面です。投稿詳細のいいねは`REACT_CONTENT_DETAIL_ENABLED=1 REACT_LIKES_ENABLED=1`で有効化でき、いいね操作だけを無効にすることもできます。コメントの一覧・作成・本人による削除は`REACT_CONTENT_DETAIL_ENABLED=1 REACT_COMMENTS_ENABLED=1`で独立して有効化できます。プロフィールのフォロー・解除は`REACT_PROFILE_ENABLED=1 REACT_FOLLOWS_ENABLED=1`で切り替えられ、本人の編集操作は既存Railsの処理を使います。未ログイン時の投稿詳細は公開ERBを継続します。[新画面の起動・切替・開発時更新・テスト](docs/react-frontend.md)を参照してください。DockerビルドにはNode.js 24の独立したフロント工程が含まれ、Railsの実行環境は従来の構成を使います。
+ユーザー一覧・ログイン済み投稿詳細・公開プロフィール・投稿フォームのReact版を追加しました。初期状態は既存画面です。投稿詳細のいいねは`REACT_CONTENT_DETAIL_ENABLED=1 REACT_LIKES_ENABLED=1`で有効化でき、いいね操作だけを無効にすることもできます。コメントの一覧・作成・本人による削除は`REACT_CONTENT_DETAIL_ENABLED=1 REACT_COMMENTS_ENABLED=1`で独立して有効化できます。プロフィールのフォロー・解除は`REACT_PROFILE_ENABLED=1 REACT_FOLLOWS_ENABLED=1`で切り替えられ、本人の編集操作は既存Railsの処理を使います。投稿フォームはDBのマイグレーション後、`REACT_CONTENT_FORM_ENABLED=1`で独立して有効化できます。画像はJPEG・PNG・GIFを1枚、5MBまで選択できます。未ログイン時の投稿詳細は公開ERBを継続します。[新画面の起動・切替・開発時更新・テスト](docs/react-frontend.md)を参照してください。DockerビルドにはNode.js 24の独立したフロント工程が含まれ、Railsの実行環境は従来の構成を使います。

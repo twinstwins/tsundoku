@@ -72,7 +72,11 @@ export async function login(page: Page, user: User) {
   await expect(page.getByRole('link', { name: user.name, exact: true })).toBeVisible();
 }
 
-export async function expectSaved(page: Page) {
+export async function expectSaved(page: Page, reactForm = false) {
+  if (reactForm) {
+    await expect(page).toHaveURL(/\/contents\/[1-9]\d*$/);
+    return;
+  }
   await expect(page).toHaveURL(new URL('/', baseURL).href);
   await expect(page.getByText('投稿が保存されました', { exact: true }).first()).toBeVisible();
 }
@@ -84,7 +88,7 @@ export async function createContent(page: Page, withImage = false): Promise<Cont
   await page.getByLabel('Description', { exact: true }).fill('E2Eで作成した本の紹介');
   if (withImage) await page.getByLabel('投稿画像', { exact: true }).setInputFiles(imagePath);
   await page.getByRole('button', { name: '投稿', exact: true }).click();
-  await expectSaved(page);
+  await expectSaved(page, process.env.EXPECT_REACT_CONTENT_FORM === '1');
   await visit(page, '/contents');
   const marker = page.getByTestId('content-title').filter({ hasText: `${title}さんの投稿` });
   await expect(marker).toHaveCount(1);

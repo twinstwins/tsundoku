@@ -31,6 +31,8 @@ test('Rails loads Vite modules and React Refresh preserves image fallback state'
   await expect(page.getByRole('heading', { name: post.title, exact: true })).toBeVisible();
   await expect(page.locator('[data-react-page="content"]')).toHaveCount(1);
   await expectImageLoaded(page.getByRole('img', { name: '投稿画像 1', exact: true }));
+  const saved = await (await page.request.get(`/api/v1/contents/${post.id}`)).json();
+  expect(saved.data.photos).toHaveLength(1);
   await page.getByRole('button', { name: 'いいね', exact: true }).click();
   await expect(page.getByRole('button', { name: 'いいねを取り消す', exact: true })).toBeEnabled();
   await expect(page.locator('dd')).toHaveText(['1', '0']);

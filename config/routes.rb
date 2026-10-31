@@ -8,7 +8,8 @@ Rails.application.routes.draw do
           get :following, :followers, :contents
         end
       end
-      resources :contents, only: [:index, :show] do
+      get 'content-submissions/:submission_key', to: 'contents#submission'
+      resources :contents, only: [:index, :show, :create] do
         resource :like, only: [:update, :destroy]
         resources :comments, only: [:index, :create, :destroy]
       end

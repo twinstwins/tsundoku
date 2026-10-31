@@ -3,7 +3,7 @@
   "info": {
     "title": "Tsundoku API",
     "version": "1.0.0",
-    "description": "同一オリジンのセッション認証。全応答はCache-Control: no-store。リストはID降順。メールとCSRFトークンは本人用の/meだけに含む。いいね・コメント・フォロー更新は本人のセッションとCSRFトークンを検証する。"
+    "description": "同一オリジンのセッション認証。全応答はCache-Control: no-store。リストはID降順。メールとCSRFトークンは本人用の/meだけに含む。投稿作成・いいね・コメント・フォロー更新は本人のセッションとCSRFトークンを検証する。"
   },
   "servers": [
     {
@@ -215,6 +215,99 @@
             "description": "followingは本人がフォローするユーザーの投稿。"
           }
         ]
+      },
+      "post": {
+        "operationId": "createContent",
+        "summary": "本人の投稿を作成する",
+        "description": "名前と説明、任意の1画像を登録する。Idempotency-Keyは小文字UUID v4で本人ごとに一意。同じ内容とキーの再送は200で保存済み投稿を返し、別内容は409。実行者はセッションから決める。既存DBが保存できない4バイト文字は422。画像付きはmultipartを使う。",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ContentCreateForm"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContentCreateJson"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "新規保存。Locationは投稿APIのURL。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "同じキー・内容ですでに保存済み。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "本文のリソースが不足・不正",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "409": {
+            "description": "同じキーで異なる内容。error.codeはsubmission_conflict。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
       }
     },
     "/api/v1/contents/{id}": {
@@ -731,6 +824,51 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/v1/content-submissions/{submission_key}": {
+      "get": {
+        "operationId": "getContentSubmission",
+        "summary": "本人の送信識別子から保存済み投稿を確認する",
+        "description": "ログイン必須。本人の投稿だけを検索し、未確認・他人のキーは404。404でも元の要求が到着・処理中の場合があるため、再送は同じキーと内容で行う。新しい投稿は作らない。",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "submission_key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "保存済みの本人の投稿",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       }
@@ -1331,6 +1469,54 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/FollowState"
+          }
+        }
+      },
+      "ContentCreateForm": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "content[name]"
+        ],
+        "properties": {
+          "content[name]": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "content[description]": {
+            "type": "string"
+          },
+          "content[image]": {
+            "type": "string",
+            "format": "binary",
+            "description": "任意の1画像。JPEG/PNG/GIF、5MiB以下。画像内容も検証する。"
+          }
+        }
+      },
+      "ContentCreateJson": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "content"
+        ],
+        "properties": {
+          "content": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255
+              },
+              "description": {
+                "type": "string"
+              }
+            }
           }
         }
       }

@@ -7,6 +7,6 @@ class Users::SessionsController < Devise::SessionsController
 
   def store_content_return_path
     path = params[:return_to]
-    store_location_for(:user, path) if path.is_a?(String) && path.match?(%r{\A/(?:contents|users)/[1-9]\d{0,18}\z})
+    store_location_for(:user, path) if path.is_a?(String) && (path == '/contents/new' || path.match?(%r{\A/(?:contents|users)/[1-9]\d{0,18}\z}))
   end
 end

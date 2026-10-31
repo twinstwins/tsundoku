@@ -180,6 +180,22 @@ export type FollowStateResponse = {
     data: FollowState;
 };
 
+export type ContentCreateForm = {
+    'content[name]': string;
+    'content[description]'?: string;
+    /**
+     * 任意の1画像。JPEG/PNG/GIF、5MiB以下。画像内容も検証する。
+     */
+    'content[image]'?: Blob | File;
+};
+
+export type ContentCreateJson = {
+    content: {
+        name: string;
+        description?: string;
+    };
+};
+
 export type Page = number;
 
 export type PerPage = number;
@@ -369,6 +385,51 @@ export type ListContentsResponses = {
 };
 
 export type ListContentsResponse = ListContentsResponses[keyof ListContentsResponses];
+
+export type CreateContentData = {
+    body: ContentCreateJson;
+    headers: {
+        'Idempotency-Key': string;
+        'X-CSRF-Token': string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/v1/contents';
+};
+
+export type CreateContentErrors = {
+    /**
+     * 本文のリソースが不足・不正
+     */
+    400: Error;
+    /**
+     * 401 未認証。HTMLへのリダイレクトはしない。
+     */
+    401: Error;
+    /**
+     * 同じキーで異なる内容。error.codeはsubmission_conflict。
+     */
+    409: Error;
+    /**
+     * 422 入力不正。fieldsに項目別メッセージを返す。
+     */
+    422: Error;
+};
+
+export type CreateContentError = CreateContentErrors[keyof CreateContentErrors];
+
+export type CreateContentResponses = {
+    /**
+     * 同じキー・内容ですでに保存済み。
+     */
+    200: ContentResponse;
+    /**
+     * 新規保存。Locationは投稿APIのURL。
+     */
+    201: ContentResponse;
+};
+
+export type CreateContentResponse = CreateContentResponses[keyof CreateContentResponses];
 
 export type GetContentData = {
     body?: never;
@@ -736,3 +797,38 @@ export type FollowUserResponses = {
 };
 
 export type FollowUserResponse = FollowUserResponses[keyof FollowUserResponses];
+
+export type GetContentSubmissionData = {
+    body?: never;
+    path: {
+        submission_key: string;
+    };
+    query?: never;
+    url: '/api/v1/content-submissions/{submission_key}';
+};
+
+export type GetContentSubmissionErrors = {
+    /**
+     * 401 未認証。HTMLへのリダイレクトはしない。
+     */
+    401: Error;
+    /**
+     * 404 対象なし。
+     */
+    404: Error;
+    /**
+     * 422 入力不正。fieldsに項目別メッセージを返す。
+     */
+    422: Error;
+};
+
+export type GetContentSubmissionError = GetContentSubmissionErrors[keyof GetContentSubmissionErrors];
+
+export type GetContentSubmissionResponses = {
+    /**
+     * 保存済みの本人の投稿
+     */
+    200: ContentResponse;
+};
+
+export type GetContentSubmissionResponse = GetContentSubmissionResponses[keyof GetContentSubmissionResponses];

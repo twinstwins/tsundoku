@@ -1,6 +1,20 @@
 import { it, expect, vi } from 'vitest';
 import { act, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { startFrontendPages } from './bootstrap';
+
+it('discards the private form draft before a Turbolinks snapshot and starts an empty form on return', async () => {
+  const fetch = vi.fn(); vi.stubGlobal('fetch', fetch);
+  document.body.innerHTML = '<div data-react-page="content-form" data-user-id="7" data-login-url="/users/sign_in"></div>';
+  let stop = () => {}; act(() => { stop = startFrontendPages(); });
+  try {
+    await userEvent.type(await screen.findByLabelText('Name'), '保存しない下書き');
+    act(() => { document.dispatchEvent(new Event('turbolinks:before-cache')); });
+    expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
+    act(() => { document.dispatchEvent(new Event('turbolinks:load')); });
+    expect(await screen.findByLabelText('Name')).toHaveValue(''); expect(fetch).not.toHaveBeenCalled();
+  } finally { act(stop); }
+});
 
 it('unmounts before Turbolinks caching and mounts once with fresh data on return', async () => {
   let name = '最初の読者';

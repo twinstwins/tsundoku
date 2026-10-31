@@ -4,7 +4,7 @@ require 'set'
 
 class FrontendAssets
   ENTRY = 'src/entrypoints/application.tsx'.freeze
-  FEATURES = { users: 'REACT_USERS_ENABLED', content: 'REACT_CONTENT_DETAIL_ENABLED', profile: 'REACT_PROFILE_ENABLED' }.freeze
+  FEATURES = { users: 'REACT_USERS_ENABLED', content: 'REACT_CONTENT_DETAIL_ENABLED', profile: 'REACT_PROFILE_ENABLED', content_form: 'REACT_CONTENT_FORM_ENABLED' }.freeze
   InvalidManifest = Class.new(StandardError)
 
   def initialize(root: Rails.root, env: ENV, development: Rails.env.development?)

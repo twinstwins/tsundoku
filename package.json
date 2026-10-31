@@ -14,7 +14,8 @@
     "test:e2e:profile": "playwright test --config=playwright.profile.config.ts",
     "test:e2e:likes": "playwright test --config=playwright.likes.config.ts",
     "test:e2e:comments": "playwright test --config=playwright.comments.config.ts",
-    "test:e2e:follows": "playwright test --config=playwright.follows.config.ts"
+    "test:e2e:follows": "playwright test --config=playwright.follows.config.ts",
+    "test:e2e:content-form": "playwright test --config=playwright.content-form.config.ts"
   },
   "engines": {
     "node": ">=22.18.0"
