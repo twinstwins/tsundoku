@@ -26,8 +26,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
-      EVALUATION_RUNS: ${{ github.event.inputs.runs || '5' }}
-      EVALUATION_E2E_RUNS: ${{ github.event.inputs.runs || '5' }}
+      EVALUATION_RUNS: ${{ github.event.inputs.runs || '1' }}
+      EVALUATION_E2E_RUNS: ${{ github.event.inputs.runs || '1' }}
       EVALUATION_LABEL: github-linux
       EVALUATION_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
@@ -40,9 +40,7 @@ jobs:
           -e EVALUATION_LABEL -e EVALUATION_REVISION e2e
       - name: Collect Rails logs
         if: always()
-        run: |
-          mkdir -p tmp/bun-evaluation/results/github-linux
-          docker compose -f compose.e2e.yml -f compose.bun-evaluation.yml logs --no-color > tmp/bun-evaluation/results/github-linux/rails.log 2>&1
+        run: docker compose -f compose.e2e.yml -f compose.bun-evaluation.yml logs --no-color > e2e-docker.log 2>&1
       - name: Summarize compatibility results
         if: always()
         run: |
@@ -62,7 +60,9 @@ jobs:
         if: always()
         with:
           name: bun-evaluation
-          path: tmp/bun-evaluation/results/github-linux/
+          path: |
+            tmp/bun-evaluation/results/github-linux/
+            e2e-docker.log
           retention-days: 7
       - name: Remove isolated test environment
         if: always()

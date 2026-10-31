@@ -10,3 +10,5 @@ playwright-report
 test-results
 playwright/.auth
 e2e-docker.log
+public/bun-evaluation
+tools/bun-evaluation/sample/dist

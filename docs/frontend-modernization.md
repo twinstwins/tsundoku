@@ -1,12 +1,12 @@
 # Tsundokuのフロントエンド移行計画
 
-既存の利用者操作をE2Eテストで確認できる状態にしてから、Railsの認証とデータを使いながら、画面をReactとTypeScriptへ段階的に移す。ビルドにはViteを採用する。React基盤の導入前にBunを比較検証し、依存管理とJavaScript実行環境の採用判断を行う。最初の画面はユーザー一覧と投稿詳細とし、更新系の操作と認証画面を後から移行する。
+既存の利用者操作をE2Eテストで確認できる状態にしてから、Railsの認証とデータを使いながら、画面をReactとTypeScriptへ段階的に移す。ビルドにはViteを採用する。Bunを比較検証した結果、今回の移行ではNode.js 24とnpmを継続する。最初の画面はユーザー一覧と投稿詳細とし、更新系の操作と認証画面を後から移行する。
 
 ## 現状と進捗
 
 現状はRuby 2.5.1、Rails 5.2、ERB、Sprockets、Bootstrap 4、jQuery、Rails UJS、Turbolinksで構成される。いいね・コメント・フォローは、サーバーが返す`.js.erb`をブラウザーで実行して更新している。`package.json`にはフロントの実装依存がない。読み取り用のJSON APIとOpenAPI・生成型を追加した。
 
-第0段階ではPlaywrightとTypeScript、専用Compose環境、GitHub Actionsを導入した。続く第1段階では認可・入力検証と読み取りAPI・生成型を追加した。React画面の実装前にBunを比較検証する。PCとモバイルのChromiumで、次の12シナリオ（計24ケース）を実行する。
+第0段階ではPlaywrightとTypeScript、専用Compose環境、GitHub Actionsを導入した。続く第1段階では認可・入力検証と読み取りAPI・生成型を追加した。第1.5段階のBun比較も実施し、Node.jsとnpmの継続を判断した。PCとモバイルのChromiumで、次の12シナリオ（計24ケース）を実行する。
 
 | 分野 | E2Eで確認する操作 |
 | --- | --- |
@@ -29,7 +29,7 @@
 | 画面 | React 19系 | ページと共通UIをコンポーネント化する |
 | 言語 | TypeScriptのstrict設定 | APIとフォームの型を明確にする |
 | 開発とビルド | Vite 8系 | 開発時の更新と本番用の静的ファイル生成を担当する |
-| 依存管理とJS実行 | Node.js 24 LTSとnpmを基準にBunを比較検証 | 機能互換・再現性・実行時間を比較して採用範囲を決める |
+| 依存管理とJS実行 | Node.js 24とnpm | Bunとの互換性・反復測定の比較結果に基づき継続する |
 | スタイル | CSS ModulesとCSS変数 | 新画面のスタイルを既存Bootstrapから分離する |
 | サーバーデータ | TanStack Query | JSON APIの取得・再取得・更新後の整合を扱う |
 | テスト | Playwright、Vitest、React Testing Library、既存RSpec | 利用者操作、部品、APIの責務を分けて確認する |
@@ -49,17 +49,17 @@ flowchart LR
 
 Railsが既存URLのHTMLを返し、その画面のReactルートをマウントする。URLとDeviseのセッションCookieを引き継ぎ、既存リンクやブラウザーの戻る操作を守る。初期のルーティングはRailsが担当する。画面内遷移の必要性が明確になった時点でReact Routerの導入を判断する。
 
-最初のVite連携は、ビルド工程で生成したmanifestをRailsから読む方式を基本とする。ビルドの実行環境は以下のBun検証で決める。開発時はViteのHMRとReact Refresh、本番時はmanifestからJS・CSS・依存ファイルを読み込む。現在のRuby 2.5に最新のRails連携gemが入ることを前提にしない。Rails更新後に連携gemへ寄せるか再評価する。[Reactの段階導入](https://react.dev/learn/add-react-to-an-existing-project)、[Viteのバックエンド連携](https://vite.dev/guide/backend-integration)
+最初のVite連携は、ビルド工程で生成したmanifestをRailsから読む方式を基本とする。ビルドの実行環境はNode.js 24とnpmに決めた。開発時はViteのHMRとReact Refresh、本番時はmanifestからJS・CSS・依存ファイルを読み込む。現在のRuby 2.5に最新のRails連携gemが入ることを前提にしない。Rails更新後に連携gemへ寄せるか再評価する。[Reactの段階導入](https://react.dev/learn/add-react-to-an-existing-project)、[Viteのバックエンド連携](https://vite.dev/guide/backend-integration)
 
 ## 実施順序と完了条件
 
-1人が専任し、既存機能を維持する場合の概算。下表のフロントとAPI整備は、Bunの比較検証1〜2日を含めて合計13〜22開発日を目安とする。Ruby・Rails・DBの更新工数は互換性調査後に別途見積もる。
+1人が専任し、既存機能を維持する場合の概算。当初の全体目安はBunの比較検証を含めて合計13〜22開発日。現在は第1.5段階まで実装し、残る第2〜6段階は概算10〜16開発日を目安とする。Ruby・Rails・DBの更新工数は互換性調査後に別途見積もる。
 
 | 順序 | PRの範囲 | 目安 | 次へ進む条件 |
 | --- | --- | --- | --- |
 | 0 完了 | E2E・CI・回帰テストの実行手順 | 導入済み | PCとモバイルの20ケース、RSpec、型チェックが成功する |
-| 1 実装済み | 認可と入力検証、読み取りAPI・OpenAPI・生成型 | 実装済み | 他人の更新・削除が拒否され、401・404・422をrequest specとE2Eで確認でき、型の生成漏れをCIで検出できる |
-| 1.5 | Bunの検証と採用判断 | 1〜2日 | 依存管理・Vite・型チェック・E2E・CIを比較し、採用範囲と判断理由を記録する |
+| 1 完了 | 認可と入力検証、読み取りAPI・OpenAPI・生成型 | 導入済み | 他人の更新・削除が拒否され、401・404・422をrequest specとE2Eで確認でき、型の生成漏れをCIで検出できる |
+| 1.5 完了 | Bunの検証と採用判断 | 検証済み | Node.jsとnpmを継続。結果と再実行手順を記録済み |
 | 2 | React・Vite・CSS Modulesの基盤とユーザー一覧1画面 | 2日 | 開発時HMR、本番ビルド、直接アクセス、再読込、旧画面への切替が成功する |
 | 3 | 投稿詳細、プロフィール、ユーザー一覧の読み取り画面 | 2〜3日 | 画像なし・空一覧・画像読込失敗を含めて表示でき、既存E2Eが成功する |
 | 4 | いいね、コメント、フォローの更新操作 | 3〜5日 | 更新直後・再読込後の整合、二重送信、通信失敗時の復帰を確認できる |
@@ -68,12 +68,12 @@ Railsが既存URLのHTMLを返し、その画面のReactルートをマウント
 
 ### Bunの検証と採用判断
 
-現在の検証基準はNode.js 24とnpmであり、このPRではBunでの動作確認は行っていない。Bunの検証は独立したPRで実施する。Viteとの組合せは[Bun公式の案内](https://bun.sh/guides/ecosystem/vite)を参照し、次の二段階を分けて評価する。
+第1.5段階の独立したPRでBun 1.4.4とNode.js 24.22.1を比較し、今回はNode.jsとnpmを継続すると判断した。Bunで依存を導入する構成は動作したが、Bunでの実行ではPlaywrightがテストの読み込みで失敗した。依存管理だけの変更は短縮幅が小さく、現段階で導入する利点が十分ではない。反復測定と判断の詳細は[Bunの検証結果](bun-evaluation.md)を参照する。次回の再評価も[Bun公式のVite案内](https://bun.sh/guides/ecosystem/vite)を参照し、次の二段階を分けて評価する。
 
 1. 依存管理にBunを使用し、Vite・型チェック・PlaywrightはNode.jsで実行する。
 2. Vite・型チェック・Playwright自体もBunで実行する。実行コマンドとランタイムのバージョンをログに残し、CLIの指定によりNode.jsが使われる場合と区別する。E2Eの実行器はPlaywrightを継続する。
 
-既存のE2Eと型チェックに加え、最小のReact・ViteサンプルでHMR、React Refresh、本番ビルド、Railsからのmanifest読込とJS・CSSの配信を検証する。本番ビルド結果を実際に表示するところまで確認してから、画面移行用の基盤へ反映する。
+今回、既存E2Eと型生成・型チェックに加え、最小React・ViteサンプルのHMR、React Refresh、本番ビルド、Railsからのmanifest読込とJS・CSSの実際の配信を確認した。次の画面移行用の基盤には検証済みのNode・Vite構成を反映する。再評価時にも次の条件を用いる。
 
 | 検証対象 | 確認内容 |
 | --- | --- |
@@ -83,7 +83,7 @@ Railsが既存URLのHTMLを返し、その画面のReactルートをマウント
 | 実行時間 | 同じマシン・コード・依存バージョンで、キャッシュなし／ありを分けて各5回測定する。依存導入、開発サーバー起動、本番ビルド、E2EとCI全体の中央値・ばらつきを比較する |
 | 運用 | lockfile更新、依存アップデート、バージョン固定、障害時の調査とNode.jsへの復帰に必要な手順を確認する |
 
-機能互換と再現性を必須条件とし、時間短縮や運用上の利点を実測で示せる範囲を採用する。結論は「依存管理と実行環境の両方に採用」「依存管理だけ採用」「Node.jsとnpmを継続」のいずれかとし、測定結果と判断理由を計画書に追記する。互換性の問題や維持が難しい回避策が残る場合は、Node.jsとnpmを継続する。
+次回の再評価でも機能互換と再現性を必須条件とし、時間短縮や運用上の利点を実測で示せる範囲を採用する。結論は「依存管理と実行環境の両方に採用」「依存管理だけ採用」「Node.jsとnpmを継続」のいずれかとし、測定結果と判断理由を計画書に追記する。互換性の問題や維持が難しい回避策が残る場合は、Node.jsとnpmを継続する。
 
 採用した場合はCI成功後にlockfileを一本化する。Bunへの変更を独立したPRにまとめ、問題が出た場合はその変更を戻して検証済みのNode.jsとnpmの構成へ復帰できるようにする。
 
@@ -107,7 +107,7 @@ Reactのルート要素の内側はReactが更新する。既存jQueryの置換�
 
 ## Railsとデータの更新
 
-E2E・ViteのJavaScript実行環境は、現在のRails実行環境と別コンテナで動かす。現在の基準はNode.js 24とし、Bunは上記の検証結果に従って採用範囲を決める。これにより、Rails更新中もフロントの準備を進められる。新しいバックエンドを公開する段階では、Ruby・Rails・MySQLをサポート対象の組合せへ更新する。
+E2E・ViteのJavaScript実行環境は、現在のRails実行環境と別コンテナで動かす。今回の比較結果に基づき、実行環境はNode.js 24とnpmを継続する。これにより、Rails更新中もフロントの準備を進められる。新しいバックエンドを公開する段階では、Ruby・Rails・MySQLをサポート対象の組合せへ更新する。
 
 RubyとRailsの更新は、対応するRuby版を挟みながらRailsのマイナー版ごとにPRを分ける。各段階でRSpecと同じE2Eを実行する。Devise、CarrierWave、画像処理、Cookie形式、DBアダプターを重点確認する。中間版は移行作業用とし、リリース先の最終構成とは区別する。[Rails公式の更新手順](https://guides.rubyonrails.org/upgrading_ruby_on_rails.html)
 
@@ -123,4 +123,4 @@ RubyとRailsの更新は、対応するRuby版を挟みながらRailsのマイ�
 - 切り戻しは対象画面の設定をERBへ戻す。旧画面が必要とするAPI・JSと、直前リリースのVite成果物を残す。データ変更は追加から始め、旧画面に戻せる期間を確保する。
 - 500、認証・更新操作の失敗、二重送信、画像欠落が増えた場合は対象画面を戻し、同じE2Eへ再現ケースを追加する。許容値はリリース前に既存画面の実測と比較して定める。
 
-次に着手するPRは「Bunの検証と採用判断」。依存管理と実行環境の採用範囲を決め、その後にユーザー一覧をReactで表示する小さなPRで、Viteの配信と旧画面への切替を実証する。
+次に着手するPRは「React・Vite・CSS Modulesの基盤とユーザー一覧」。Node.js 24とnpmを使い、開発時HMR、本番配信、直接アクセス、再読込、旧ERB画面への切替を実証する。

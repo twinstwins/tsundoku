@@ -11,7 +11,7 @@ const label = process.env.EVALUATION_LABEL || process.platform;
 if (!/^[a-z][a-z0-9-]*$/.test(label)) throw new Error('Invalid evaluation label');
 const runs = Number(process.env.EVALUATION_RUNS || 5);
 const e2eRuns = Number(process.env.EVALUATION_E2E_RUNS || runs);
-if (!Number.isInteger(runs) || runs < 1 || runs > 5 || !Number.isInteger(e2eRuns) || e2eRuns < 0 || e2eRuns > runs) throw new Error('Use 1–5 runs and 0–runs E2E runs');
+if (!Number.isInteger(runs) || runs < 1 || runs > 5 || !Number.isInteger(e2eRuns) || e2eRuns < 1 || e2eRuns > runs) throw new Error('Use 1–5 runs and 1–runs E2E runs');
 const modes = (process.env.EVALUATION_MODES || 'npm-node,bun-node,bun-bun').split(',');
 if (modes.some(mode => !['npm-node', 'bun-node', 'bun-bun'].includes(mode))) throw new Error('Invalid evaluation mode');
 const sample = 'tools/bun-evaluation/sample';
@@ -131,8 +131,8 @@ async function devSmoke(mode, directory, iteration, cache) {
   try {
     const url = 'http://127.0.0.1:45173/bun-evaluation/';
     let ready = false;
-    for (let attempt = 0; attempt < 300; attempt++) {
-      try { ready = (await fetch(url)).ok; } catch {}
+    for (let attempt = 0, deadline = performance.now() + 30_000; attempt < 300 && performance.now() < deadline; attempt++) {
+      try { ready = (await fetch(url, { signal: AbortSignal.timeout(1_000) })).ok; } catch {}
       if (ready) break;
       if (child.exitCode !== null) throw new Error(`Vite exited: ${output}`);
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -153,8 +153,12 @@ async function devSmoke(mode, directory, iteration, cache) {
     expect(errors).toEqual([]);
   } finally {
     await writeFile(appFile, original); await context.close();
-    const exited = new Promise(resolve => child.once('close', resolve));
-    stop(child); await exited;
+    if (child.exitCode === null && child.signalCode === null) {
+      const exited = new Promise(resolve => child.once('close', resolve));
+      const timer = setTimeout(() => stop(child, 'SIGKILL'), 5_000);
+      stop(child);
+      try { await exited; } finally { clearTimeout(timer); }
+    }
     await writeFile(path.join(resultDir, `${mode}-vite-${iteration}-${cache}.log`), output);
   }
 }

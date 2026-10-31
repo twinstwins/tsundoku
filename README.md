@@ -62,3 +62,5 @@ GitHub Actionsの`E2E`ワークフローは、専用DBでのRSpec・API型の生
 読み取りAPIの公開範囲、セッションとCSRF、OpenAPIからの型生成は[APIの利用手順](docs/api/v1/README.md)を参照してください。
 
 React・TypeScript・Viteへの移行順序と完了条件は[フロントエンド移行計画](docs/frontend-modernization.md)を参照してください。
+
+Bunの比較検証では、今回はNode.jsとnpmを継続する判断にしました。[測定結果と採用判断](docs/bun-evaluation.md)、[検証の再実行手順](tools/bun-evaluation/README.md)を参照してください。
