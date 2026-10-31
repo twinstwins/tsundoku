@@ -1,0 +1,29 @@
+services:
+  web:
+    environment:
+      REACT_USERS_ENABLED: "1"
+      VITE_DEV_SERVER_URL: ${VITE_DEV_SERVER_URL:-http://localhost:5173}
+    depends_on:
+      frontend:
+        condition: service_healthy
+  frontend:
+    image: node:24.22.1-bookworm-slim
+    working_dir: /workdir/frontend
+    command: sh -c 'npm ci --no-fund && npm run dev'
+    environment:
+      VITE_DEV_SERVER_URL: ${VITE_DEV_SERVER_URL:-http://localhost:5173}
+      RAILS_ORIGIN: ${RAILS_ORIGIN:-http://localhost:3000}
+      VITE_USE_POLLING: ${VITE_USE_POLLING:-0}
+    ports:
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - ./frontend:/workdir/frontend
+      - ./types:/workdir/types:ro
+      - frontend_dev_node_modules:/workdir/frontend/node_modules
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5173/@vite/client').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+volumes:
+  frontend_dev_node_modules:

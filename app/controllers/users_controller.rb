@@ -3,8 +3,12 @@ class UsersController < ApplicationController
   before_action :set_editable_user, only: [:edit, :update]
 
   def index
-    @users = User.all
     @user = current_user
+    if frontend_assets.enabled?
+      render :index_react
+    else
+      @users = User.all
+    end
   end
 
   def show

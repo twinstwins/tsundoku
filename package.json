@@ -7,7 +7,9 @@
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:report": "playwright show-report"
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:react": "playwright test --config=playwright.react.config.ts",
+    "test:e2e:dev": "playwright test --config=playwright.dev.config.ts"
   },
   "engines": {
     "node": ">=22.18.0"

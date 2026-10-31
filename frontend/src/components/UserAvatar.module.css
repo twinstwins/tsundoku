@@ -1,0 +1,3 @@
+.avatar, .placeholder { flex: none; width: 48px; height: 48px; border-radius: 50%; }
+.avatar { object-fit: cover; }
+.placeholder { display: inline-flex; align-items: center; justify-content: center; background: var(--users-surface-muted); color: var(--users-ink-muted); font-weight: 600; }

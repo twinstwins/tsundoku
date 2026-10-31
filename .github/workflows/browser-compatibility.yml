@@ -1,0 +1,47 @@
+name: Browser compatibility
+
+on:
+  schedule:
+    - cron: '0 21 * * 5'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/browser-compatibility.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: browser-compatibility-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browsers:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      REACT_USERS_ENABLED: "1"
+      E2E_RAILS_ENV: production
+      E2E_ALL_BROWSERS: "1"
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Build Rails and frontend assets
+        run: docker compose -f compose.e2e.yml build web
+      - name: Verify Chromium, Firefox, and WebKit
+        run: docker compose -f compose.e2e.yml up --abort-on-container-exit --exit-code-from e2e e2e
+      - name: Collect service logs
+        if: always()
+        run: docker compose -f compose.e2e.yml logs --no-color > e2e-docker.log 2>&1
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: browser-compatibility-results
+          path: |
+            playwright-report/
+            test-results/
+            e2e-docker.log
+          retention-days: 7
+      - name: Remove isolated test environment
+        if: always()
+        run: docker compose -f compose.e2e.yml down -v --remove-orphans
