@@ -1,0 +1,8 @@
+.git
+.bundle
+vendor/bundle
+mysql
+log
+tmp
+node_modules
+coverage

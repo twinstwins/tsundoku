@@ -3,7 +3,11 @@
 <p><%= @content.description %></p>
 <%= link_to user_path(@content.user)  %>
 <h2>アバターイメージ</h2>
-<%= image_tag (@content.user.avatar.avatar_image.url) %>
+<% if @content.user.avatar? %>
+  <%= image_tag @content.user.avatar.avatar_image.url %>
+<% else %>
+  <p>イメージ未登録</p>
+<% end %>
 <%= link_to user_path(@content.user) %>
 <strong><%= @content.user.name %></strong>
 
